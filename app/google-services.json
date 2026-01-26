@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "647858905848",
+    "project_id": "ethiopay-542c4",
+    "storage_bucket": "ethiopay-542c4.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:647858905848:android:5bf7e5bc514f04221f910d",
+        "android_client_info": {
+          "package_name": "com.example.ethiopay"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBXHl_FbAnJGzQTlYq8uA3ySnqeA99liNs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
