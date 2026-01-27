@@ -3,7 +3,7 @@ package com.example.ethiopay
 import android.app.Application
 import com.stripe.android.PaymentConfiguration
 import com.stripe.android.Stripe
-import company.tap.gosellapi.GoSellSDK
+//import company.tap.gosellapi.GoSellSDK
 import io.scanbot.sdk.ScanbotSDKInitializer
 
 class App : Application() {

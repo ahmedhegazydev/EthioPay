@@ -75,7 +75,7 @@ dependencies {
 
 
     implementation(platform("com.google.firebase:firebase-bom:33.2.0"))
-    implementation("com.google.firebase:firebase-auth-ktx")
+//    implementation("com.google.firebase:firebase-auth-ktx")
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation("androidx.navigation:navigation-compose:2.8.5")
 
@@ -83,20 +83,18 @@ dependencies {
 //    implementation("com.github.Tap-Payments:TapCardScannerKit-Android:0.0.12")
 
 
-    implementation("com.github.Tap-Payments:goSellSDK-Android:2.17.5") {
-        exclude(group = "com.android.support")
-    }
+//    implementation("com.github.Tap-Payments:goSellSDK-Android:2.17.5") {
+//        exclude(group = "com.android.support")
+//    }
     //    implementation(project(":library"))
     // ✅ نسخة حديثة متاحة على MavenCentral
-    implementation("jp.wasabeef:blurry:4.0.1")
-    implementation("androidx.multidex:multidex:2.0.1")
+//    implementation("jp.wasabeef:blurry:4.0.1")
+//    implementation("androidx.multidex:multidex:2.0.1")
 
-    implementation("com.google.android.material:material:1.12.0")
-    implementation("androidx.cardview:cardview:1.0.0")
+//    implementation("com.google.android.material:material:1.12.0")
+//    implementation("androidx.cardview:cardview:1.0.0")
 
-    implementation("com.stripe:stripe-android:20.+")
-
-
+    implementation("com.stripe:stripe-android:22.7.0")
 
     implementation("io.scanbot:sdk-package-3:7.0.0")
     implementation("io.scanbot:sdk-creditcard-assets:7.0.0")

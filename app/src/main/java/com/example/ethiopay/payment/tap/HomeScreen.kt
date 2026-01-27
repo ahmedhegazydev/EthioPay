@@ -6,7 +6,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.platform.LocalContext
-import com.example.ethiopay.payment.tap.TapAddCardActivity
+//import com.example.ethiopay.payment.tap.TapAddCardActivity
 
 @Composable
 fun HomeScreen() {
@@ -23,7 +23,7 @@ fun HomeScreen() {
 
     Column {
         Button(onClick = {
-            launcher.launch(Intent(context, TapAddCardActivity::class.java))
+//            launcher.launch(Intent(context, TapAddCardActivity::class.java))
         }) { Text("Add Card (Tap)") }
 
         if (tokenId != null) {
