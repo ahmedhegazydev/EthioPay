@@ -93,4 +93,12 @@ dependencies {
 
     implementation("com.google.android.material:material:1.12.0")
     implementation("androidx.cardview:cardview:1.0.0")
+
+    implementation("com.stripe:stripe-android:20.+")
+
+
+
+    implementation("io.scanbot:sdk-package-3:7.0.0")
+    implementation("io.scanbot:sdk-creditcard-assets:7.0.0")
+    implementation("io.scanbot:rtu-ui-v2-bundle:7.0.0")
 }

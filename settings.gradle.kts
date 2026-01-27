@@ -20,6 +20,9 @@ dependencyResolutionManagement {
         maven(url = "https://jitpack.io")
         jcenter() // ✅ مؤقتًا عشان blurry
 
+        // Add the repositories here:
+        maven(url = "https://nexus.scanbot.io/nexus/content/repositories/releases/")
+        maven(url = "https://nexus.scanbot.io/nexus/content/repositories/snapshots/")
     }
 }
 

@@ -1,0 +1,20 @@
+<?php
+require 'vendor/autoload.php';
+
+\Stripe\Stripe::setApiKey('sk_test_51RbPA2FYLQId6JpFdQZKphe94unl65OggvvSifxnFR2hk6JU895YiDSeJKmNEtlQeFUBpNEGrOBm1Z3vSHyqGI7w00hiZygwdA'); // حط السكريت هنا (على السيرفر فقط)
+
+header('Content-Type: application/json');
+
+try {
+  $intent = \Stripe\SetupIntent::create([
+    'payment_method_types' => ['card'],
+    'usage' => 'off_session',
+  ]);
+
+  echo json_encode([
+    'clientSecret' => $intent->client_secret
+  ]);
+} catch (Exception $e) {
+  http_response_code(400);
+  echo json_encode(['error' => $e->getMessage()]);
+}
