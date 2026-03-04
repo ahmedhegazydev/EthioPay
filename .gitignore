@@ -22,3 +22,12 @@ local.properties
 *.dex
 *.dm
 *.zip
+
+# Android build outputs
+**/build/
+*.apk
+*.aab
+*.aar
+*.dex
+*.dm
+*.zip
