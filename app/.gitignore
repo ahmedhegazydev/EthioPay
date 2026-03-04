@@ -1,1 +1,12 @@
-/build
+# Android
+build/
+*.apk
+*.aab
+*.aar
+.gradle/
+local.properties
+
+
+# Android Studio
+.idea/
+*.iml

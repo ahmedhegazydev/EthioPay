@@ -1,21 +1,27 @@
-# Add project specific ProGuard rules here.
-# You can control the set of applied configuration files using the
-# proguardFiles setting in build.gradle.
-#
-# For more details, see
-#   http://developer.android.com/guide/developing/tools/proguard.html
+# Compose / Kotlin metadata (احتياطي)
+-keep class kotlin.Metadata { *; }
 
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
+# Stripe
+-keep class com.stripe.android.** { *; }
+-dontwarn com.stripe.android.**
 
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
+# Firebase / Play services (غالباً مش محتاج keep كتير، بس ده يقلل warnings)
+-dontwarn com.google.firebase.**
+-dontwarn com.google.android.gms.**
 
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
-#-renamesourcefileattribute SourceFile
+# Scanbot (مهم جداً)
+-keep class io.scanbot.** { *; }
+-dontwarn io.scanbot.**
+
+
+-keep public class com.inet.facelock.callback.FaceCallback {*;}
+-keep public class com.inet.facelock.callback.FaceDetectionResult {*;}
+
+# iText 5 "unified" events refer to iText 7 commons actions (optional)
+-dontwarn com.itextpdf.commons.actions.**
+-dontwarn com.itextpdf.commons.actions.confirmations.**
+-dontwarn com.itextpdf.commons.actions.contexts.**
+-dontwarn com.itextpdf.commons.actions.data.**
+-dontwarn com.itextpdf.commons.actions.processors.**
+-dontwarn com.itextpdf.commons.actions.producer.**
+-dontwarn com.itextpdf.commons.actions.sequence.**

@@ -1,3 +1,5 @@
+import org.gradle.authentication.http.BasicAuthentication
+
 pluginManagement {
     repositories {
         google {
@@ -11,21 +13,33 @@ pluginManagement {
         gradlePluginPortal()
     }
 }
+
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
         google()
         mavenCentral()
-//        maven { url = uri("https://pay.cards/maven") }
-        maven(url = "https://jitpack.io")
-        jcenter() // ✅ مؤقتًا عشان blurry
 
-        // Add the repositories here:
+        // ✅ JitPack (Private) with token from gradle.properties -> authToken=jp_...
+        maven(url = "https://jitpack.io") {
+            authentication {
+                create<BasicAuthentication>("basic")
+            }
+            credentials {
+                // Don't crash sync if missing, but you'll still get 401 later (which is correct)
+                username = providers.gradleProperty("authToken").orNull
+                password = ""
+            }
+        }
+        // Scanbot repos
         maven(url = "https://nexus.scanbot.io/nexus/content/repositories/releases/")
         maven(url = "https://nexus.scanbot.io/nexus/content/repositories/snapshots/")
     }
 }
 
 rootProject.name = "EthioPay"
-//include(":app")
-include(":app", ":library")
+include(
+    ":app",
+    ":libidsdk",
+    ":libfotoapparat"
+)

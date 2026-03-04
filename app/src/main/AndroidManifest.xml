@@ -2,10 +2,13 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    // Add the permissions here:
+<!--    // Add the permissions here:-->
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-feature android:name="android.hardware.camera" />
     <uses-permission android:name="android.permission.INTERNET" />
+<!--    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />-->
+<!--    <uses-feature android:name="android.hardware.camera.autofocus" />-->
+    <uses-permission android:name="android.permission.USE_BIOMETRIC" />
 
     <application
         android:name=".App"
@@ -14,6 +17,7 @@
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher"
+        android:usesCleartextTraffic="true"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
@@ -21,7 +25,7 @@
         tools:replace="android:appComponentFactory"
         tools:targetApi="28">
         <activity
-            android:name=".MainActivity"
+            android:name=".main.MainActivity"
             android:exported="true"
             android:label="@string/app_name"
             android:theme="@style/Theme.MyApplication">
@@ -33,6 +37,34 @@
         </activity>
 
         <!--<activity android:name=".payment.tap.TapAddCardActivity" />-->
+<!--        <activity-->
+<!--            android:name=".payment.ver_id_2.OcrScanActivity"-->
+<!--            android:screenOrientation="portrait"-->
+<!--            android:exported="false" />-->
+
+
+        <meta-data
+            android:name="com.appliedrec.verid.password"
+            android:value="YOUR_PASSWORD" />
+
+        <activity
+            android:name=".payment.idcardrecognition.CameraActivityKt"
+            android:exported="false" />
+
+
+<!--        <activity-->
+<!--            android:name="com.example.ethiopay.payment.idcardrecognition.ResultActivity"-->
+<!--            android:exported="false"-->
+<!--            android:screenOrientation="portrait" />-->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="com.kbyai.idcardrecognition.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" /> <!-- Define your file paths XML resource -->
+        </provider>
 
     </application>
 
