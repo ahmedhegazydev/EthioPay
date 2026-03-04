@@ -1,0 +1,248 @@
+تمام 👌
+بما إن الشغل **Android فقط دلوقتي + Backend شغال Test Mode**، هديك Roadmap واضحة لمدة شهرين تخلّص فيها نفس الفيتشرز اللي في الصور (زي STC Bank تقريبًا) لكن كـ Beta مستقرة.
+
+---
+
+# 🎯 الهدف بعد شهرين
+
+تطبيق أندرويد فيه:
+
+* Bottom Navigation (Home / Accounts / Cards / Market / More)
+* عرض الرصيد
+* Accounts screen
+* Cards screen (كاروسيل كارت)
+* Send Money flow
+* Add Money flow
+* Transaction History
+* Settings + Logout
+* Integration كامل مع backend + Stripe test
+
+---
+
+# 🗓️ خطة شهرين (8 أسابيع)
+
+---
+
+## 🟣 الأسبوع 1 — تأسيس المشروع صح
+
+### الهدف:
+
+تظبط الهيكل الأساسي للتطبيق.
+
+### المطلوب:
+
+* Material 3 Theme
+* Design System بسيط (ألوان – مسافات – خطوط)
+* Components reusable:
+
+  * AccountCard
+  * ActionTile
+  * ListItem
+* Bottom Navigation (5 Tabs)
+* Navigation Graph نظيف
+* ViewModel لكل Tab
+* استخدام StateFlow + collectAsStateWithLifecycle
+
+✅ النتيجة:
+تطبيق فيه كل التابات بس بمحتوى تجريبي (Placeholder)
+
+---
+
+## 🟣 الأسبوع 2 — شاشة Accounts
+
+### المطلوب:
+
+* تصميم Account Card زي الصورة
+* عرض:
+
+  * اسم الحساب
+  * الرصيد
+  * رقم الحساب masked
+* زر Create new account (حتى لو placeholder)
+* ربط بـ API:
+
+  * GET /accounts
+* Loading + Error state
+
+✅ النتيجة:
+Accounts شغالة بالكامل من API
+
+---
+
+## 🟣 الأسبوع 3 — شاشة Cards
+
+### المطلوب:
+
+* HorizontalPager لعرض الكروت
+* تصميم الكارت بنفس الشكل
+* Section:
+
+  * Linked account
+  * Available limit
+  * Cashback
+* ربط بـ API:
+
+  * GET /cards
+* Animation بسيطة أثناء السحب
+
+✅ النتيجة:
+Cards Tab جاهزة زي الصورة
+
+---
+
+## 🟣 الأسبوع 4 — شاشة Home
+
+### المطلوب:
+
+* Wallet Card كبيرة فيها الرصيد
+* Quick actions:
+
+  * Add money
+  * Send money
+* Services Grid (Transfers – Financing – SADAD… placeholders)
+* عرض آخر عمليات
+
+✅ النتيجة:
+Home شغالة بالكامل
+
+---
+
+## 🟣 الأسبوع 5 — Bottom Sheets (زي الصور)
+
+### Send Money BottomSheet
+
+* To contact
+* Between my accounts (Flow حقيقي)
+* Within app
+* Local bank
+* International
+
+### Add Money BottomSheet
+
+* Apple Pay (placeholder)
+* Debit/Credit card → يفتح Stripe عندك
+* Bank transfer (placeholder)
+* SADAD (placeholder)
+
+✅ النتيجة:
+نفس تجربة STC تقريبًا
+
+---
+
+## 🟣 الأسبوع 6 — Flow التحويل
+
+### Between My Accounts Flow:
+
+* اختيار من حساب
+* اختيار إلى حساب
+* إدخال مبلغ
+* تأكيد
+* شاشة نجاح
+
+ربط بـ:
+POST /transfers
+
+* تسجيل العملية في Transaction History
+
+✅ النتيجة:
+تحويل داخلي شغال End-to-End
+
+---
+
+## 🟣 الأسبوع 7 — More / Settings
+
+### المطلوب:
+
+* Profile Header (initials + name)
+* My QR code (placeholder)
+* My documents (placeholder)
+* Help & support
+* Password & security
+* Notification preferences
+* App language
+* Logout:
+
+  * Firebase signOut
+  * clear DataStore
+  * Navigate للـ Login
+
+✅ النتيجة:
+More Tab كاملة
+
+---
+
+## 🟣 الأسبوع 8 — تحسين واستقرار
+
+### المطلوب:
+
+* تحسين UI spacing
+* تحسين performance
+* منع Passing Activity/NavController
+* تحسين Error handling
+* Empty states
+* Dark mode (اختياري)
+* Internal Testing build
+
+✅ النتيجة:
+نسخة Beta جاهزة للنشر التجريبي
+
+---
+
+# 🔐 حاجات مهمة جدًا حتى لو Test Mode
+
+حتى في Beta:
+
+* SSL فقط
+* Obfuscation (R8)
+* منع Screenshot
+* Root detection بسيط
+* Encrypted DataStore
+* Certificate pinning
+
+---
+
+# ⚠️ أهم حاجة في المشروع
+
+بما إن عندك:
+
+* Topup
+* Stripe
+* Ledger
+* Transfers
+
+ركز جدًا إن:
+
+* الرصيد يتحسب من ledger مش عمود واحد
+* كل عملية لها transaction record
+* ما فيش duplicate transfer (idempotency)
+
+---
+
+# 🧠 نصيحة تخليك تخلص أسرع
+
+اعمل UI بالكامل بـ fake data الأول
+وبعدين اربطها بالـ API
+عشان ما توقفش بسبب backend logic.
+
+---
+
+# ⏱️ الوقت المتوقع لو التزمت بالخطة
+
+لو بتشتغل 3–4 ساعات يوميًا:
+هتخلص ده فعليًا في شهرين.
+
+لو Full-time:
+ممكن تخلص في 5–6 أسابيع.
+
+---
+
+لو تحب:
+أعمل لك:
+
+* Architecture رسمية للتطبيق
+* Structure فولدرات مثالي
+* Template Navigation جاهز
+* Template BottomSheet زي STC
+* Checklist Production-ready
+
+قولّي أنت شغال لوحدك ولا معاك حد تاني؟

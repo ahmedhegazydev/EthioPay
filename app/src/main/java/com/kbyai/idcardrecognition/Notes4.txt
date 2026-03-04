@@ -1,0 +1,159 @@
+إحساسك صح جدًا 👌
+أكبر غلطة في أول Beta إنك تحاول تبني “STC كاملة”.
+إنت محتاج **Core Wallet MVP** مش Digital Bank كاملة.
+
+خليني أختصرلك الـ Features لأهم حاجة فعلًا تخليك تطلع Beta قوية خلال 8 أسابيع 👇
+
+---
+
+# 🎯 الهدف الواقعي بعد 8 أسابيع
+
+تطبيق Wallet بسيط فيه:
+
+1. Login (Firebase Phone + Biometric)
+2. عرض الرصيد
+3. Transaction History
+4. Add Money (Stripe test)
+5. Send Money (بين حساباتك فقط)
+6. Cards (عرض فقط – مش إدارة متقدمة)
+7. Logout
+
+ونسيب:
+
+* Market
+* International transfer
+* Apple Pay
+* SADAD
+* Cashback
+* Limits control
+* Junior accounts
+* Financing
+
+دي كلها Version 2.
+
+---
+
+# ✅ MVP النهائي اللي نركز عليه
+
+## 🟢 لازم يبقوا موجودين:
+
+* Home (balance + quick actions)
+* Accounts (عرض الحساب فقط)
+* Cards (عرض فقط)
+* Transfer (between my accounts فقط)
+* Topup via Stripe
+* History
+* Settings بسيطة + Logout
+
+بس كده.
+
+---
+
+# 🗓️ خطة 8 أسابيع مبسطة جدًا
+
+## 🔵 الأسبوع 1
+
+* Clean Navigation
+* Bottom bar (Home / Accounts / Cards / More)
+* Design system بسيط
+
+## 🔵 الأسبوع 2
+
+* Accounts screen
+* عرض الرصيد من API
+* Loading + Error
+
+## 🔵 الأسبوع 3
+
+* Home screen
+* Quick buttons:
+
+  * Add money
+  * Send money
+* عرض آخر 5 عمليات
+
+## 🔵 الأسبوع 4
+
+* Add money flow (Stripe)
+* Success screen
+* Update balance بعد الدفع
+
+## 🔵 الأسبوع 5
+
+* Send money flow (Between my accounts فقط)
+* Confirm screen
+* Success screen
+* تسجيل العملية في history
+
+## 🔵 الأسبوع 6
+
+* Transaction History screen
+* Pagination بسيطة
+
+## 🔵 الأسبوع 7
+
+* Cards screen (عرض فقط)
+* Profile + Logout
+* Biometric re-auth
+
+## 🔵 الأسبوع 8
+
+* Fix bugs
+* Polish UI
+* Stability
+* Beta build
+
+---
+
+# 🚫 اللي مش هنعمله دلوقتي
+
+* Market tab
+* Multiple transfer types
+* External bank
+* Sadad
+* Cashback
+* Card issuing
+* Limits dashboard
+* QR payments
+* Apple Wallet
+
+---
+
+# 🎯 كده إنت بتبني:
+
+“Smart Wallet Beta”
+مش بنك كامل
+
+وده مناسب جدًا لشخص واحد خلال شهرين.
+
+---
+
+# 💡 نصيحة مهمة جدًا
+
+لو سألت نفسك:
+“هل المستخدم محتاج ده علشان يحول فلوس ويشحن محفظته؟”
+
+لو الإجابة لا → شيله من الـ MVP.
+
+---
+
+# 🔥 لو عملت بس ده صح
+
+* Auth
+* Ledger مضبوط
+* Topup
+* Transfer
+* History
+* UI نظيف
+
+هتبقى Beta قوية جدًا.
+
+---
+
+لو تحب أعملك:
+
+* Feature Scope نهائي مختصر جدًا (ورقة واحدة)
+* Checklist يومية تنفذ بيها
+* أو أقسم لك الـ 8 أسابيع على شكل مهام أسبوعية دقيقة جدًا
+
+قولّي إنت شغال قد إيه في اليوم تقريبًا؟

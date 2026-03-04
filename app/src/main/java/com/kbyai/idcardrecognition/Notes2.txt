@@ -1,0 +1,289 @@
+تمام — بما إن **التركيز شهرين Android فقط** (والـ backend موجود وبيخدم)، يبقى هنمشي Roadmap Android “UI + Integration + Polish” عشان تطلع نفس تجربة الصور.
+
+هديك **8 أسابيع** مقسّمين Deliverables واضحة + ترتيب شغل يقلل إعادة الشغل.
+
+---
+
+# ✅ هدف الشهرين (Android Beta زي الصور)
+
+* Bottom navigation (Home / Accounts / Cards / Market / More)
+* Accounts list + account card UI
+* Cards screen (card carousel + details + link)
+* Home screen (wallet card + quick actions)
+* Bottom sheets:
+
+  * Send money options
+  * Add money options
+* Transfers screens + Top up screens
+* More / Settings + Logout
+* Integration مع backend الحالي + Stripe test + Firebase login + biometric + scanning اللي عندك
+
+---
+
+# 🗓️ Roadmap Android فقط (8 أسابيع)
+
+## Week 1 — App Skeleton + Design System
+
+**الهدف:** تعمل UI framework ثابت يخليك تبني باقي الشاشات بسرعة.
+
+✅ Tasks
+
+* Material3 theme + tokens (colors/typography/spacings)
+* Components reusable:
+
+  * `PrimaryCard`
+  * `ActionTile`
+  * `ListTile`
+  * `SectionHeader`
+  * `MoneyText`
+* Navigation:
+
+  * BottomBar + NavHost (5 tabs)
+  * كل Tab له graph صغير (nested nav)
+* State management:
+
+  * ViewModels لكل tab
+  * `collectAsStateWithLifecycle`
+
+🎯 Deliverable
+
+* App فيها الـ 5 tabs + شاشات placeholder + شكل عام قريب من الصور (حتى لو بيانات fake)
+
+---
+
+## Week 2 — Accounts Tab (زي الصورة الأولى)
+
+**الهدف:** Accounts list UI + API integration + loading/error states.
+
+✅ Tasks
+
+* شاشة Accounts:
+
+  * Header: “Accounts” + “Create new account +”
+  * Account cards (primary + secondary)
+  * Balance + masked account number
+* Integration:
+
+  * call `GET /accounts`
+  * cache in memory (ViewModel)
+* UX states:
+
+  * Skeleton loading (shimmer أو placeholders)
+  * Retry on error
+
+🎯 Deliverable
+
+* Accounts UI مطابق تقريبًا + بيانات من backend
+
+---
+
+## Week 3 — Cards Tab (زي الصورة الثانية)
+
+**الهدف:** Cards screen كاملة بالشكل: Card كبير + paging + sections.
+
+✅ Tasks
+
+* Card carousel:
+
+  * `HorizontalPager` (compose foundation pager)
+  * indicator dots
+* Card details:
+
+  * “Add to Apple Wallet” (placeholder button)
+  * Linked account section
+  * Available limit / Cashback earned sections (حتى لو API أو placeholder)
+* Integration:
+
+  * `GET /cards` + mapping UI
+* Animation:
+
+  * scale/alpha subtle أثناء السحب
+
+🎯 Deliverable
+
+* Cards tab جاهزة زي الصورة
+
+---
+
+## Week 4 — Home Tab (زي الصورة الأخيرة)
+
+**الهدف:** Home فيها wallet + quick actions + services grid.
+
+✅ Tasks
+
+* Wallet card كبيرة (balance + account name)
+* Quick actions row:
+
+  * Add money
+  * Send money
+  * (optional) Spend / History
+* Services grid (Transfers / Financing / SADAD / etc placeholders)
+* Integration:
+
+  * `GET /balance` أو نفس accounts primary
+  * `GET /recent-transactions`
+
+🎯 Deliverable
+
+* Home tab شغالة + actions تفتح bottom sheets
+
+---
+
+## Week 5 — Bottom Sheets (Send money + Add money) زي الصور
+
+**الهدف:** تعمل نفس الـ BottomSheet style (rounded, spaced, list tiles).
+
+✅ Tasks
+
+### Send Money Sheet
+
+* Title: “How would you like to send money?”
+* Options tiles:
+
+  * To contact (placeholder flow)
+  * Between my accounts (flow حقيقي)
+  * Within app (placeholder/حقيقي)
+  * Local bank transfer (placeholder)
+  * International transfer (placeholder)
+
+### Add Money Sheet
+
+* Title: “How do you want to add money?”
+* Options:
+
+  * Apple Pay (placeholder)
+  * Debit/Credit card → يفتح Topup screen عندك
+  * Bank transfer (placeholder)
+  * SADAD (placeholder)
+
+🎯 Deliverable
+
+* نفس تجربة الصور تقريبًا + navigation للفلو الحقيقي عندك (topup / transfer)
+
+---
+
+## Week 6 — Transfers Screens + Between Accounts Flow
+
+**الهدف:** تعمل transfers screen بسيطة + flow between accounts كامل.
+
+✅ Tasks
+
+* Screen: Transfers options (زي الصورة اللي فيها list)
+* Flow: Between my accounts
+
+  * Select from account
+  * Select to account
+  * amount + note
+  * confirm
+  * success screen
+* Integration:
+
+  * call `POST /transfers`
+* UI:
+
+  * validation + disabled confirm until valid
+
+🎯 Deliverable
+
+* Transfers شغالة end-to-end (داخلية على الأقل)
+
+---
+
+## Week 7 — More / Settings Tab (زي الصور)
+
+**الهدف:** صفحة More/Profile + logout + settings placeholders.
+
+✅ Tasks
+
+* Profile header (avatar initials + name)
+* Tiles:
+
+  * My QR code (placeholder)
+  * My documents (placeholder)
+  * Junior requests (placeholder)
+* Support:
+
+  * Help & support (placeholder)
+* Account settings:
+
+  * Password & security (placeholder)
+  * Notification preferences (placeholder)
+  * App language (placeholder)
+  * Limit usage & control (placeholder)
+* Logout button:
+
+  * Firebase signOut
+  * clear DataStore keys (face_verified/session/prisma id etc)
+  * navigate to Gate/Login
+
+🎯 Deliverable
+
+* More tab شبه الصور + Logout يعمل reset كامل
+
+---
+
+## Week 8 — Polish + QA + Beta Readiness
+
+**الهدف:** تجعل التجربة “Beta-ready” بدون bugs.
+
+✅ Tasks
+
+* UI polish:
+
+  * padding consistency
+  * typography alignment
+  * RTL readiness (لو هتدعم عربي)
+  * dark mode (اختياري)
+* Performance:
+
+  * avoid passing Activity/NavController/Vm as params (زي اللي اشتغلنا عليه)
+  * stable state models (data class val)
+* Error handling:
+
+  * network errors
+  * empty states
+  * offline message بسيط
+* Analytics (اختياري):
+
+  * Firebase analytics events basic
+* Release:
+
+  * versioning
+  * internal testing build
+
+🎯 Deliverable
+
+* APK/AAB Beta ready
+
+---
+
+# ✅ Checklist سريع للـ Beta (Android)
+
+* [ ] Bottom bar + tabs شغالة
+* [ ] Accounts list (API) + UI
+* [ ] Cards pager (API) + UI
+* [ ] Home wallet + actions
+* [ ] Send money bottom sheet + transfer flow
+* [ ] Add money bottom sheet + topup flow
+* [ ] More tab + logout clear session
+* [ ] Loading / error / retry states
+
+---
+
+# اقتراح مهم يخليك تخلص أسرع
+
+اعمل **UI أولاً بالـ fake data** (Week 1–3)
+وبعدها “wire it” بالـ API (Week 2–6)
+عشان ما توقفش بسبب backend edge cases.
+
+---
+
+لو تبعتلي:
+
+* أسماء الـ endpoints اللي عندك (accounts/cards/transfers/topups)
+* شكل الـ JSON response
+  أطلع لك مباشرة:
+* Models (Kotlin)
+* Retrofit interfaces
+* ViewModels skeleton
+* Screens skeletons لكل tab بنفس layout الصور

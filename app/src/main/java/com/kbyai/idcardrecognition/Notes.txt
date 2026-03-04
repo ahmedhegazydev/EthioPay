@@ -1,0 +1,21 @@
+3) ازاي تجرّب Success / Failed (Test Cards)
+
+داخل PaymentSheet في Test Mode:
+
+✅ Success
+
+4242 4242 4242 4242
+أي تاريخ مستقبل (مثلاً 12/30)
+أي CVC (مثلاً 123)
+ZIP Code: أي رقم 5 خانات:
+12345
+
+❌ Declined / Failed
+4000 0000 0000 0002 (card declined)
+
+
+🔁 3D Secure / Authentication
+4000 0025 0000 3155
+ (هيطلب 3DS)
+الاسم والـ zip مش مهمين غالبًا (حسب الدولة/الإعدادات)
+

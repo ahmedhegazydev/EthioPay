@@ -1,0 +1,60 @@
+
+1) DB Schema (Prisma) — User / Wallet / Transaction
+prisma/schema.prisma
+
+
+
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id        String   @id @default(cuid())
+  phone     String   @unique
+  name      String?
+  createdAt DateTime @default(now())
+
+  wallet    Wallet?
+  sent      Transaction[] @relation("sent")
+  received  Transaction[] @relation("received")
+}
+
+model Wallet {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  currency  String   @default("ETB")
+  balance   Int      @default(0) // ✅ integer cents (مثلاً piastres)
+  updatedAt DateTime @updatedAt
+
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+model Transaction {
+  id          String   @id @default(cuid())
+  fromUserId  String
+  toUserId    String
+  amount      Int
+  currency    String   @default("ETB")
+  status      String   @default("SUCCESS") // SUCCESS/FAILED
+  note        String?
+  createdAt   DateTime @default(now())
+
+  fromUser    User @relation("sent", fields: [fromUserId], references: [id])
+  toUser      User @relation("received", fields: [toUserId], references: [id])
+}
+
+
+
+
+
+2) Limits Hardcoded (بسيطة)
+حد أقصى للتحويل في العملية: MAX_PER_TX = 50_000 (مثال)
+
+حد يومي: MAX_DAILY = 200_000 (مثال)
+هنحسب اليومي من سجل العمليات.
