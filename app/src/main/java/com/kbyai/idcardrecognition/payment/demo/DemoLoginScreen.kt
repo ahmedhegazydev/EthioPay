@@ -22,7 +22,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.fragment.app.FragmentActivity
 import com.kbyai.idcardrecognition.payment.models.ScannedCardUi
 import com.stripe.android.Stripe
 
@@ -42,104 +41,77 @@ fun HomeDemo(
     bumpRefresh: () -> Unit,
 ) {
     var tab by remember { mutableStateOf(Tab.Wallet) }
-    var status by remember { mutableStateOf("Idle") }
+    var status by remember { mutableStateOf("Ready") }
     val ctx = LocalContext.current
 
-    // 🎨 Light palette
-    val bg = Brush.verticalGradient(
-        colors = listOf(Color(0xFFF7F8FC), Color(0xFFF2F4FA), Color(0xFFF7F8FC))
-    )
-    val textMain = Color(0xFF111827)
-    val textSub = Color(0xFF6B7280)
-    val accent = Color(0xFF4F46E5)
-    val accentSoft = Color(0xFFEEF2FF)
-    val border = Color(0xFFE5E7EB)
+    // 🎨 Minimalist palette for 40-50+ group
+    val bg = Color(0xFFF9FAFB) // Very light gray/white
+    val textMain = Color(0xFF1F2937)
+    val textSub = Color(0xFF4B5563)
+    val accent = Color(0xFF1A56BE) // Noble Blue
+    val accentSoft = Color(0xFFE0E7FF)
 
     Scaffold(
-        containerColor = Color.Transparent,
+        containerColor = bg,
         topBar = {
-            CenterAlignedTopAppBar(
+            TopAppBar(
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color.White,
+                    titleContentColor = textMain
+                ),
                 title = {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(
-                            "Ethiopay Demo",
-                            fontWeight = FontWeight.Bold,
-                            color = textMain
-                        )
-                        Text(
-                            "Demo environment",
-                            color = textSub,
-                            style = MaterialTheme.typography.bodySmall
-                        )
-                    }
-                },
-                navigationIcon = {
-                    // simple avatar
-                    Box(
-                        modifier = Modifier
-                            .padding(start = 12.dp)
-                            .size(36.dp)
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(accentSoft),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = userId.take(1).uppercase(),
-                            color = accent,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
+                    Text(
+                        "Noble",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 24.sp,
+                        letterSpacing = 1.sp
+                    )
                 },
                 actions = {
-                    // UserId chip
-                    AssistChip(
-                        onClick = { /* optional copy later */ },
-                        label = {
-                            Text(
-                                "User: ${userId.take(10)}…",
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                        },
-                        colors = AssistChipDefaults.assistChipColors(
-                            containerColor = Color.White,
-                            labelColor = textSub
-                        ),
-//                        border = AssistChipDefaults.assistChipBorder(borderColor = border)
-                    )
-                    Spacer(Modifier.width(8.dp))
                     IconButton(onClick = onLogOutClicked) {
                         Icon(Icons.Default.Logout, contentDescription = "Logout", tint = textMain)
                     }
-                    Spacer(Modifier.width(6.dp))
+                    Spacer(Modifier.width(8.dp))
                 }
             )
         },
         bottomBar = {
-            NavigationBar {
+            NavigationBar(
+                containerColor = Color.White,
+                tonalElevation = 8.dp
+            ) {
                 NavigationBarItem(
                     selected = tab == Tab.Wallet,
                     onClick = { tab = Tab.Wallet },
-                    label = { Text("Wallet") },
-                    icon = { Icon(Icons.Default.CreditCard, contentDescription = null) }
+                    label = { Text("Wallet", fontSize = 12.sp) },
+                    icon = { Icon(Icons.Default.CreditCard, contentDescription = null) },
+                    colors = NavigationBarItemDefaults.colors(
+                        selectedIconColor = accent,
+                        selectedTextColor = accent,
+                        indicatorColor = accentSoft
+                    )
                 )
                 NavigationBarItem(
                     selected = tab == Tab.Transfer,
                     onClick = { tab = Tab.Transfer },
-                    label = { Text("Transfer") },
-                    icon = { Icon(Icons.Default.Send, contentDescription = null) }
+                    label = { Text("Send", fontSize = 12.sp) },
+                    icon = { Icon(Icons.Default.Send, contentDescription = null) },
+                    colors = NavigationBarItemDefaults.colors(
+                        selectedIconColor = accent,
+                        selectedTextColor = accent,
+                        indicatorColor = accentSoft
+                    )
                 )
                 NavigationBarItem(
                     selected = tab == Tab.History,
                     onClick = { tab = Tab.History },
-                    label = { Text("History") },
-                    icon = { Icon(Icons.Default.History, contentDescription = null) }
-                )
-                NavigationBarItem(
-                    selected = tab == Tab.Admin,
-                    onClick = { tab = Tab.Admin },
-                    label = { Text("Admin") },
-                    icon = { Icon(Icons.Default.AdminPanelSettings, contentDescription = null) }
+                    label = { Text("History", fontSize = 12.sp) },
+                    icon = { Icon(Icons.Default.History, contentDescription = null) },
+                    colors = NavigationBarItemDefaults.colors(
+                        selectedIconColor = accent,
+                        selectedTextColor = accent,
+                        indicatorColor = accentSoft
+                    )
                 )
             }
         }
@@ -147,56 +119,30 @@ fun HomeDemo(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(bg)
                 .padding(padding)
-                .padding(12.dp),
+                .padding(horizontal = 20.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            
+            Spacer(Modifier.height(16.dp))
 
-            // ✅ Status bar (pretty)
-            Card(
-                shape = RoundedCornerShape(18.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White),
-                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Row(
-                    Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Surface(
-                        color = accentSoft,
-                        shape = RoundedCornerShape(999.dp)
-                    ) {
-                        Text(
-                            text = status,
-                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-                            color = accent,
-                            fontWeight = FontWeight.SemiBold,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    }
-
-                    Spacer(Modifier.width(12.dp))
-
-                    if (isPaying) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(18.dp),
-                            strokeWidth = 2.dp,
-                            color = accent
-                        )
-                        Spacer(Modifier.width(8.dp))
-                        Text("Processing payment…", color = textSub, fontSize = 12.sp)
-                    } else {
-                        Text("Ready", color = textSub, fontSize = 12.sp)
-                    }
-                }
+            // Simplified Status Bar
+            if (isPaying) {
+                LinearProgressIndicator(
+                    modifier = Modifier.fillMaxWidth().height(4.dp).clip(RoundedCornerShape(2.dp)),
+                    color = accent,
+                    trackColor = accentSoft
+                )
+                Text(
+                    "Processing...",
+                    modifier = Modifier.padding(top = 4.dp),
+                    color = accent,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium
+                )
             }
 
-            Spacer(Modifier.height(12.dp))
-
-            // ✅ IMPORTANT: bounded content area (prevents infinity height)
+            // Main Content
             Box(
                 modifier = Modifier
                     .fillMaxWidth()

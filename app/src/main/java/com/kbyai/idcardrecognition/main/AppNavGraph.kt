@@ -14,6 +14,7 @@ import androidx.navigation.compose.rememberNavController
 import com.kbyai.idcardrecognition.auth_gate.AuthGate
 import com.kbyai.idcardrecognition.login.FirebasePhoneAuthScreen
 import com.kbyai.idcardrecognition.payment.demo.HomeDemo
+import com.kbyai.idcardrecognition.payment.demo.SplashScreen
 import com.kbyai.idcardrecognition.payment.demo.clearFaceVerified
 import com.kbyai.idcardrecognition.payment.demo.setFaceVerified
 import com.kbyai.idcardrecognition.payment.idcardrecognition.KycRoute
@@ -46,7 +47,15 @@ fun AppNavGraph(
     var prismaUserId by rememberSaveable { mutableStateOf(prismaUserIdState) }
     LaunchedEffect(prismaUserId) { prismaUserIdState = prismaUserId }
 
-    NavHost(navController = navController, startDestination = Screen.Gate.route) {
+    NavHost(navController = navController, startDestination = Screen.Splash.route) {
+
+        composable(Screen.Splash.route) {
+            SplashScreen(onTimeout = {
+                navController.navigate(Screen.Gate.route) {
+                    popUpTo(Screen.Splash.route) { inclusive = true }
+                }
+            })
+        }
 
         composable(Screen.Gate.route) {
             AuthGate(
@@ -130,25 +139,4 @@ fun AppNavGraph(
             }
         }
     }
-}
-
-@Preview(showBackground = true)
-@Composable
-private fun AppNavGraphPreview() {
-    val ctx = LocalContext.current
-
-    val stripe = Stripe(ctx, "pk_test_preview_key")
-
-    AppNavGraph(
-        stripe = stripe,
-        scannedCard = null as ScannedCardUi?,
-        onScanClick = {},
-        setLastTopupAmount = {},
-        getRefreshSignal = { 0 },
-        bumpRefresh = {},
-        getIsPaying = { false },
-        setIsPaying = {},
-        setScanDebugDialog = {},
-        setErrorDialog = {},
-    )
 }
