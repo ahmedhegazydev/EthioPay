@@ -13,7 +13,8 @@ import kotlinx.coroutines.launch
 import com.kbyai.idcardrecognition.BuildConfig
 
 class AuthViewModel(
-    private val repo: PhoneAuthRepository = PhoneAuthRepository()
+    private val repo: PhoneAuthGateway,
+    private val sessionGateway: AuthSessionGateway,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(AuthUiState())
@@ -39,6 +40,21 @@ class AuthViewModel(
                 }
             }
             is AuthEvent.OtpChanged -> _state.update { it.copy(otp = e.v, message = null) }
+            AuthEvent.BackToPhone -> {
+                resendJob?.cancel()
+                _state.update {
+                    it.copy(
+                        verificationId = null,
+                        otp = "",
+                        canResend = false,
+                        resendSecondsLeft = 0,
+                        isSendingOtp = false,
+                        isVerifying = false,
+                        isCompletingLogin = false,
+                        message = null,
+                    )
+                }
+            }
 
             is AuthEvent.SendOtp -> sendOtp(e.activity)
             AuthEvent.VerifyOtp -> verifyOtp()
@@ -47,10 +63,11 @@ class AuthViewModel(
         }
     }
 
-    private fun sendOtp(activity: Activity) {
+    private fun sendOtp(activity: Activity?) {
         val phone = _state.value.phone.trim()
-        if (phone.isBlank()) {
-            _state.update { it.copy(message = "اكتب رقم الموبايل") }
+        val phoneError = AuthValidation.validatePhoneForOtp(phone)
+        if (phoneError != null) {
+            _state.update { it.copy(message = phoneError) }
             return
         }
 
@@ -72,7 +89,7 @@ class AuthViewModel(
             return
         }
 
-        val phoneE164 = if (phone.startsWith("+")) phone else "+2$phone"
+        val phoneE164 = AuthValidation.normalizePhone(phone)
 
         _state.update {
             it.copy(
@@ -101,16 +118,7 @@ class AuthViewModel(
                     }
 
                     is PhoneAuthResult.Verified -> {
-                        // (نادراً بيتعمل Auto-Verify)
-                        val res = repo.signInWithCredential(r.credential)
-                        _state.update {
-                            it.copy(
-                                isSendingOtp = false,
-                                isLoggedIn = res.isSuccess,
-                                message = if (res.isSuccess) "تم تسجيل الدخول" else
-                                    (res.exceptionOrNull()?.localizedMessage ?: "خطأ")
-                            )
-                        }
+                        completeVerifiedCredential(r.credential, source = "otp-auto")
                     }
 
                     is PhoneAuthResult.Error -> {
@@ -123,44 +131,34 @@ class AuthViewModel(
 
     private fun verifyOtp() {
         val st = _state.value
-        val vid = st.verificationId
-
-        if (vid.isNullOrBlank()) {
-            _state.update { it.copy(message = "ابعت OTP الأول") }
+        val validationError = AuthValidation.validateOtpSubmission(st)
+        if (validationError != null) {
+            _state.update { it.copy(message = validationError) }
             return
         }
-        if (st.otp.length < 6) {
-            _state.update { it.copy(message = "اكتب الكود 6 أرقام") }
-            return
-        }
+        val vid = checkNotNull(st.verificationId)
 
         // ✅ Simulation
         if (BuildConfig.SIMULATE_OTP) {
-            val ok = st.otp.trim() == "123456"
-            _state.update {
-                it.copy(
-                    isVerifying = false,
-                    isLoggedIn = ok,
-                    message = if (ok) "تم تسجيل الدخول (Sim)" else "الكود غلط (استخدم 123456)"
-                )
+            if (st.otp.trim() != "123456") {
+                _state.update {
+                    it.copy(
+                        isVerifying = false,
+                        isCompletingLogin = false,
+                        prismaUserId = null,
+                        message = "الكود غلط (استخدم 123456)",
+                    )
+                }
+                return
             }
+            completeSimulatedLogin()
             return
         }
 
         _state.update { it.copy(isVerifying = true, message = null) }
 
-        viewModelScope.launch {
-            val cred = repo.credentialFromCode(vid, st.otp)
-            val res = repo.signInWithCredential(cred)
-            _state.update {
-                it.copy(
-                    isVerifying = false,
-                    isLoggedIn = res.isSuccess,
-                    message = if (res.isSuccess) "تم تسجيل الدخول"
-                    else (res.exceptionOrNull()?.localizedMessage ?: "فشل التحقق")
-                )
-            }
-        }
+        val cred = repo.credentialFromCode(vid, st.otp)
+        completeVerifiedCredential(cred, source = "otp-code")
     }
 
     private fun startResendTimer() {
@@ -171,6 +169,116 @@ class AuthViewModel(
                 delay(1000)
             }
             _state.update { it.copy(resendSecondsLeft = 0) }
+        }
+    }
+
+    private fun completeSimulatedLogin() {
+        viewModelScope.launch {
+            _state.update {
+                it.copy(
+                    isVerifying = false,
+                    isCompletingLogin = true,
+                    message = null,
+                )
+            }
+
+            sessionGateway.completeSimulatedLogin()
+                .onSuccess { prismaUserId ->
+                    _state.update {
+                        it.copy(
+                            isCompletingLogin = false,
+                            prismaUserId = prismaUserId,
+                            message = "تم تسجيل الدخول (Sim)",
+                        )
+                    }
+                }
+                .onFailure { throwable ->
+                    _state.update {
+                        it.copy(
+                            isCompletingLogin = false,
+                            prismaUserId = null,
+                            message = throwable.localizedMessage ?: "Simulated login failed",
+                        )
+                    }
+                }
+        }
+    }
+
+    private fun completeVerifiedCredential(
+        credential: com.google.firebase.auth.PhoneAuthCredential,
+        source: String,
+    ) {
+        viewModelScope.launch {
+            val signInResult = repo.signInWithCredential(credential)
+            if (signInResult.isFailure) {
+                _state.update {
+                    it.copy(
+                        isSendingOtp = false,
+                        isVerifying = false,
+                        isCompletingLogin = false,
+                        prismaUserId = null,
+                        message = signInResult.exceptionOrNull()?.localizedMessage ?: "فشل التحقق",
+                    )
+                }
+                return@launch
+            }
+
+            val identity = repo.currentIdentity()
+            if (identity == null) {
+                _state.update {
+                    it.copy(
+                        isSendingOtp = false,
+                        isVerifying = false,
+                        isCompletingLogin = false,
+                        prismaUserId = null,
+                        message = "Signed in to Firebase, but no identity was returned.",
+                    )
+                }
+                return@launch
+            }
+
+            _state.update {
+                it.copy(
+                    isSendingOtp = false,
+                    isVerifying = false,
+                    isCompletingLogin = true,
+                    message = null,
+                )
+            }
+
+            val exchangeResult = sessionGateway.exchangeFirebaseAuth(
+                firebaseUid = identity.uid,
+                phone = identity.phoneNumber ?: _state.value.phone,
+            )
+
+            if (exchangeResult.isSuccess) {
+                val prismaUserId = exchangeResult.getOrNull().orEmpty()
+                sessionGateway.persistResolvedAuth(
+                    prismaUserId = prismaUserId,
+                    firebaseUid = identity.uid,
+                )
+                _state.update {
+                    it.copy(
+                        isCompletingLogin = false,
+                        prismaUserId = prismaUserId,
+                        message = if (source == "otp-auto") {
+                            "تم تسجيل الدخول تلقائيًا"
+                        } else {
+                            "تم تسجيل الدخول"
+                        },
+                    )
+                }
+            } else {
+                sessionGateway.clearAuthData()
+                val throwable = exchangeResult.exceptionOrNull()
+                _state.update {
+                    it.copy(
+                        isCompletingLogin = false,
+                        prismaUserId = null,
+                        message = throwable?.localizedMessage ?: "Backend auth request failed",
+                    )
+                }
+            }
         }
     }
 }

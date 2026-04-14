@@ -7,6 +7,7 @@ import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import androidx.datastore.preferences.core.booleanPreferencesKey
+import com.kbyai.idcardrecognition.login.SavedAuthSnapshot
 import java.util.UUID
 
 val Context.dataStore by preferencesDataStore(name = "app_storage")
@@ -33,6 +34,39 @@ suspend fun getPrismaUserId(context: Context): String? {
     return context.dataStore.data
         .map { it[StorageKeys.PRISMA_USER_ID] }
         .first()
+}
+
+suspend fun getFirebaseUid(context: Context): String? {
+    return context.dataStore.data
+        .map { it[StorageKeys.FIREBASE_UID] }
+        .first()
+}
+
+suspend fun getSavedAuthSnapshot(context: Context): SavedAuthSnapshot {
+    return context.dataStore.data.map { prefs ->
+        SavedAuthSnapshot(
+            prismaUserId = prefs[StorageKeys.PRISMA_USER_ID],
+            firebaseUid = prefs[StorageKeys.FIREBASE_UID],
+        )
+    }.first()
+}
+
+suspend fun clearKycState(context: Context) {
+    context.dataStore.edit { prefs ->
+        prefs.remove(KycKeys.ID_HASH)
+        prefs.remove(KycKeys.KYC_DONE)
+    }
+}
+
+suspend fun clearAuthData(context: Context) {
+    context.dataStore.edit { prefs ->
+        prefs.remove(StorageKeys.PRISMA_USER_ID)
+        prefs.remove(StorageKeys.FIREBASE_UID)
+        prefs.remove(KEY_SESSION_UNLOCKED)
+        prefs.remove(FaceKeys.FACE_OK)
+        prefs.remove(KycKeys.ID_HASH)
+        prefs.remove(KycKeys.KYC_DONE)
+    }
 }
 
 

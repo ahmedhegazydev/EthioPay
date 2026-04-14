@@ -1,29 +1,36 @@
 package com.kbyai.idcardrecognition.payment.ver_id_2
+
 import android.content.pm.PackageManager
 import android.widget.Toast
 import androidx.biometric.BiometricManager
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Face
 import androidx.compose.material.icons.filled.Fingerprint
-import androidx.compose.material3.*
+import androidx.compose.material.icons.filled.Shield
+import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.fragment.app.FragmentActivity
 
 @Composable
 fun FaceLoginButton(
-    onLoggedIn: () -> Unit
+    onLoggedIn: () -> Unit,
 ) {
     val context = LocalContext.current
     val activity = context as? FragmentActivity ?: return
@@ -31,67 +38,76 @@ fun FaceLoginButton(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(
-                Brush.verticalGradient(
-                    colors = listOf(
-                        Color(0xFF0F2027),
-                        Color(0xFF203A43),
-                        Color(0xFF2C5364)
-                    )
-                )
-            ),
-        contentAlignment = Alignment.Center
+            .background(MaterialTheme.colorScheme.background),
     ) {
-        Card(
-            shape = RoundedCornerShape(24.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = Color.White
-            ),
+        Column(
             modifier = Modifier
-                .padding(24.dp)
-                .fillMaxWidth()
+                .fillMaxSize()
+                .padding(horizontal = 24.dp, vertical = 20.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.SpaceBetween,
         ) {
-            Column(
+            Box(
                 modifier = Modifier
-                    .padding(24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+                    .size(56.dp)
+                    .background(
+                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                        shape = RoundedCornerShape(20.dp),
+                    ),
+                contentAlignment = Alignment.Center,
             ) {
+                Icon(
+                    imageVector = Icons.Default.Shield,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(30.dp),
+                )
+            }
 
-                // 🔵 Icon Circle
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(28.dp),
+            ) {
                 Box(
                     modifier = Modifier
-                        .size(96.dp)
-                        .clip(CircleShape)
-                        .background(Color(0xFFEEF2FF)),
-                    contentAlignment = Alignment.Center
+                        .size(132.dp)
+                        .background(
+                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                            shape = RoundedCornerShape(66.dp),
+                        ),
+                    contentAlignment = Alignment.Center,
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Face,
-                        contentDescription = "Face ID",
-                        tint = Color(0xFF4F46E5),
-                        modifier = Modifier.size(48.dp)
+                        imageVector = Icons.Default.Fingerprint,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(82.dp),
                     )
                 }
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    Text(
+                        text = "Secure Biometric Login",
+                        style = MaterialTheme.typography.headlineMedium,
+                        textAlign = TextAlign.Center,
+                    )
+                    Text(
+                        text = "Use your fingerprint or face ID for quick and secure access to your wallet.",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center,
+                    )
+                }
+            }
 
-                Text(
-                    text = "Biometric Login",
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Text(
-                    text = "Use Face ID or Fingerprint to continue securely",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Color.Gray
-                )
-
-                Spacer(modifier = Modifier.height(24.dp))
-
-                // 🔥 Main Button
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(18.dp),
+            ) {
                 Button(
                     onClick = {
                         authenticatePreferFace(
@@ -99,8 +115,8 @@ fun FaceLoginButton(
                             onSuccess = {
                                 Toast.makeText(
                                     context,
-                                    "Authentication successful ✅",
-                                    Toast.LENGTH_SHORT
+                                    "Authentication successful",
+                                    Toast.LENGTH_SHORT,
                                 ).show()
                                 onLoggedIn()
                             },
@@ -110,31 +126,23 @@ fun FaceLoginButton(
                             onNeedEnroll = {
                                 Toast.makeText(
                                     context,
-                                    "Please enroll Face ID or Fingerprint first 👆",
-                                    Toast.LENGTH_LONG
+                                    "Please enroll Face ID or fingerprint first",
+                                    Toast.LENGTH_LONG,
                                 ).show()
-                            }
+                            },
                         )
                     },
-                    shape = RoundedCornerShape(14.dp),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(52.dp)
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(24.dp),
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.Fingerprint,
-                        contentDescription = null
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("Continue with Biometrics")
+                    Text("Continue with Biometrics", fontWeight = FontWeight.SemiBold)
                 }
 
-                Spacer(modifier = Modifier.height(16.dp))
-
                 Text(
-                    text = "Face ID will be used when available,\notherwise Fingerprint",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Color.Gray
+                    text = "Your biometric data is stored securely on your device.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
                 )
             }
         }
@@ -151,27 +159,25 @@ fun authenticatePreferFace(
     onFail: (String) -> Unit,
     onNeedEnroll: (() -> Unit)? = null,
 ) {
-    val bm = BiometricManager.from(activity)
-    val canBio = bm.canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_STRONG)
+    val biometricManager = BiometricManager.from(activity)
+    val canAuthenticate = biometricManager.canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_STRONG)
 
-    // ✅ لو الجهاز فيه Face hardware ومفيش أي Biometric متسجل -> ودّيه Enroll
-    if (deviceHasFace(activity) && canBio == BiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED) {
+    if (deviceHasFace(activity) && canAuthenticate == BiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED) {
         onNeedEnroll?.invoke()
         openBiometricEnroll(activity, BiometricManager.Authenticators.BIOMETRIC_STRONG)
         onFail("No Face/Fingerprint enrolled. Please enroll and try again.")
         return
     }
 
-    // ✅ افتح الـ Prompt (النظام هيحاول Face، ولو مش متاح هيسمح Fingerprint)
     authenticateWithBiometric(
         activity = activity,
-        title = "Face ID Login",
-        subtitle = "Look at the camera (Face ID). Use fingerprint if needed.",
+        title = "Biometric Login",
+        subtitle = "Use Face ID or fingerprint to continue.",
         onSuccess = onSuccess,
         onFail = onFail,
         onNeedEnroll = {
             onNeedEnroll?.invoke()
         },
-        allowDeviceCredential = false // Face/Fingerprint فقط
+        allowDeviceCredential = false,
     )
 }

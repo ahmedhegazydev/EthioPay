@@ -1,33 +1,51 @@
 package com.kbyai.idcardrecognition.payment.demo
 
-import android.content.Context
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AdminPanelSettings
 import androidx.compose.material.icons.filled.CreditCard
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material.icons.filled.Send
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.kbyai.idcardrecognition.noble.ui.home.NobleHomeIntent
+import com.kbyai.idcardrecognition.noble.ui.home.NobleHomeTab
+import com.kbyai.idcardrecognition.noble.ui.home.NobleHomeViewModel
 import com.kbyai.idcardrecognition.payment.models.ScannedCardUi
 import com.stripe.android.Stripe
+import org.koin.androidx.compose.koinViewModel
+import org.koin.core.parameter.parametersOf
 
-private enum class Tab { Wallet, Transfer, History, Admin }
-
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
 fun HomeDemo(
     userId: String,
@@ -39,144 +57,192 @@ fun HomeDemo(
     setIsPaying: (Boolean) -> Unit,
     refreshSignal: Int,
     bumpRefresh: () -> Unit,
+    setLastTopupAmount: (Int) -> Unit,
 ) {
-    var tab by remember { mutableStateOf(Tab.Wallet) }
-    var status by remember { mutableStateOf("Ready") }
-    val ctx = LocalContext.current
+    val viewModel: NobleHomeViewModel = koinViewModel(parameters = { parametersOf(userId) })
+    val state = viewModel.state.collectAsStateWithLifecycle().value
 
-    // 🎨 Minimalist palette for 40-50+ group
-    val bg = Color(0xFFF9FAFB) // Very light gray/white
-    val textMain = Color(0xFF1F2937)
-    val textSub = Color(0xFF4B5563)
-    val accent = Color(0xFF1A56BE) // Noble Blue
-    val accentSoft = Color(0xFFE0E7FF)
+    LaunchedEffect(refreshSignal) {
+        if (refreshSignal > 0) {
+            viewModel.onIntent(NobleHomeIntent.RefreshRequested)
+        }
+    }
 
     Scaffold(
-        containerColor = bg,
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             TopAppBar(
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.White,
-                    titleContentColor = textMain
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    titleContentColor = MaterialTheme.colorScheme.onSurface,
                 ),
                 title = {
-                    Text(
-                        "Noble",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 24.sp,
-                        letterSpacing = 1.sp
-                    )
+                    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                        Text(
+                            text = "Noble",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold,
+                        )
+                        Text(
+                            text = "Secure wallet and payments",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
                 },
                 actions = {
                     IconButton(onClick = onLogOutClicked) {
-                        Icon(Icons.Default.Logout, contentDescription = "Logout", tint = textMain)
+                        Icon(Icons.Default.Logout, contentDescription = "Logout")
                     }
-                    Spacer(Modifier.width(8.dp))
-                }
+                },
             )
         },
         bottomBar = {
-            NavigationBar(
-                containerColor = Color.White,
-                tonalElevation = 8.dp
-            ) {
+            NavigationBar(containerColor = MaterialTheme.colorScheme.surface) {
                 NavigationBarItem(
-                    selected = tab == Tab.Wallet,
-                    onClick = { tab = Tab.Wallet },
-                    label = { Text("Wallet", fontSize = 12.sp) },
+                    selected = state.activeTab == NobleHomeTab.Wallet,
+                    onClick = { viewModel.onIntent(NobleHomeIntent.SelectTab(NobleHomeTab.Wallet)) },
+                    label = { Text("Wallet") },
                     icon = { Icon(Icons.Default.CreditCard, contentDescription = null) },
                     colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = accent,
-                        selectedTextColor = accent,
-                        indicatorColor = accentSoft
-                    )
+                        selectedIconColor = MaterialTheme.colorScheme.primary,
+                        selectedTextColor = MaterialTheme.colorScheme.primary,
+                        indicatorColor = MaterialTheme.colorScheme.primaryContainer,
+                    ),
                 )
                 NavigationBarItem(
-                    selected = tab == Tab.Transfer,
-                    onClick = { tab = Tab.Transfer },
-                    label = { Text("Send", fontSize = 12.sp) },
+                    selected = state.activeTab == NobleHomeTab.Send,
+                    onClick = { viewModel.onIntent(NobleHomeIntent.SelectTab(NobleHomeTab.Send)) },
+                    label = { Text("Send") },
                     icon = { Icon(Icons.Default.Send, contentDescription = null) },
                     colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = accent,
-                        selectedTextColor = accent,
-                        indicatorColor = accentSoft
-                    )
+                        selectedIconColor = MaterialTheme.colorScheme.primary,
+                        selectedTextColor = MaterialTheme.colorScheme.primary,
+                        indicatorColor = MaterialTheme.colorScheme.primaryContainer,
+                    ),
                 )
                 NavigationBarItem(
-                    selected = tab == Tab.History,
-                    onClick = { tab = Tab.History },
-                    label = { Text("History", fontSize = 12.sp) },
+                    selected = state.activeTab == NobleHomeTab.History,
+                    onClick = { viewModel.onIntent(NobleHomeIntent.SelectTab(NobleHomeTab.History)) },
+                    label = { Text("History") },
                     icon = { Icon(Icons.Default.History, contentDescription = null) },
                     colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = accent,
-                        selectedTextColor = accent,
-                        indicatorColor = accentSoft
-                    )
+                        selectedIconColor = MaterialTheme.colorScheme.primary,
+                        selectedTextColor = MaterialTheme.colorScheme.primary,
+                        indicatorColor = MaterialTheme.colorScheme.primaryContainer,
+                    ),
                 )
             }
-        }
+        },
     ) { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(horizontal = 20.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .padding(horizontal = 20.dp, vertical = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            
-            Spacer(Modifier.height(16.dp))
-
-            // Simplified Status Bar
-            if (isPaying) {
-                LinearProgressIndicator(
-                    modifier = Modifier.fillMaxWidth().height(4.dp).clip(RoundedCornerShape(2.dp)),
-                    color = accent,
-                    trackColor = accentSoft
-                )
-                Text(
-                    "Processing...",
-                    modifier = Modifier.padding(top = 4.dp),
-                    color = accent,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Medium
+            if (state.message != null || state.errorMessage != null) {
+                FeedbackCard(
+                    text = state.errorMessage ?: state.message.orEmpty(),
+                    isError = state.errorMessage != null,
+                    onDismiss = { viewModel.onIntent(NobleHomeIntent.ClearFeedback) },
                 )
             }
 
-            // Main Content
+            if (isPaying) {
+                LinearProgressIndicator(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(4.dp)
+                        .clip(RoundedCornerShape(8.dp)),
+                    color = MaterialTheme.colorScheme.primary,
+                    trackColor = MaterialTheme.colorScheme.primaryContainer,
+                )
+            }
+
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(1f)
+                    .weight(1f),
             ) {
-                when (tab) {
-                    Tab.Wallet -> WalletTab(
-                        userId = userId,
-                        onScanClick = onScanClick,
+                when (state.activeTab) {
+                    NobleHomeTab.Wallet -> WalletTab(
+                        state = state,
                         scannedCard = scannedCard,
+                        onScanClick = onScanClick,
                         stripe = stripe,
                         isPaying = isPaying,
                         setIsPaying = setIsPaying,
-                        onStatus = { status = it },
-                        refreshSignal = refreshSignal,
-                        bumpRefresh = bumpRefresh
+                        onRefresh = { viewModel.onIntent(NobleHomeIntent.RefreshRequested) },
+                        onPaymentAmountChange = {
+                            viewModel.onIntent(NobleHomeIntent.UpdatePaymentAmount(it))
+                        },
+                        onPrepareTopUp = { setLastTopupAmount(it) },
                     )
 
-                    Tab.Transfer -> TransferTab(
-                        userId = userId,
-                        onStatus = { status = it },
-                        bumpRefresh = bumpRefresh
+                    NobleHomeTab.Send -> TransferTab(
+                        state = state,
+                        onRecipientChange = {
+                            viewModel.onIntent(NobleHomeIntent.UpdateTransferRecipient(it))
+                        },
+                        onAmountChange = {
+                            viewModel.onIntent(NobleHomeIntent.UpdateTransferAmount(it))
+                        },
+                        onNoteChange = {
+                            viewModel.onIntent(NobleHomeIntent.UpdateTransferNote(it))
+                        },
+                        onSend = { viewModel.onIntent(NobleHomeIntent.SubmitTransfer) },
                     )
 
-                    Tab.History -> HistoryTab(
-                        userId = userId,
-                        refreshSignal = refreshSignal,
-                        onStatus = { status = it },
-                        bumpRefresh = bumpRefresh
+                    NobleHomeTab.History -> HistoryTab(
+                        state = state,
+                        onRefresh = { viewModel.onIntent(NobleHomeIntent.RefreshRequested) },
                     )
+                }
+            }
+        }
+    }
+}
 
-                    Tab.Admin -> AdminTab(
-                        onStatus = { status = it },
-                        bumpRefresh = bumpRefresh
+@Composable
+private fun FeedbackCard(
+    text: String,
+    isError: Boolean,
+    onDismiss: () -> Unit,
+) {
+    val containerColor = if (isError) {
+        MaterialTheme.colorScheme.error.copy(alpha = 0.08f)
+    } else {
+        MaterialTheme.colorScheme.primaryContainer
+    }
+    val contentColor = if (isError) {
+        MaterialTheme.colorScheme.error
+    } else {
+        MaterialTheme.colorScheme.primary
+    }
+
+    Card(
+        shape = MaterialTheme.shapes.medium,
+        colors = CardDefaults.cardColors(containerColor = containerColor),
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Surface(color = containerColor) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text(
+                    text = text,
+                    color = contentColor,
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                TextButton(
+                    onClick = onDismiss,
+                    modifier = Modifier.align(Alignment.End),
+                ) {
+                    Text(
+                        text = "Dismiss",
+                        color = contentColor,
+                        style = MaterialTheme.typography.labelLarge,
                     )
                 }
             }

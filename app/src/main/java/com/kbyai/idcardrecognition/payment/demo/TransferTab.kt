@@ -1,146 +1,146 @@
 package com.kbyai.idcardrecognition.payment.demo
 
-import android.widget.Toast
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Send
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.filled.Wallet
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.ui.text.style.TextAlign
-import kotlinx.coroutines.launch
+import com.kbyai.idcardrecognition.noble.ui.home.NobleHomeUiState
 
 @Composable
 fun TransferTab(
-    userId: String,
-    onStatus: (String) -> Unit,
-    bumpRefresh: () -> Unit,
+    state: NobleHomeUiState,
+    onRecipientChange: (String) -> Unit,
+    onAmountChange: (String) -> Unit,
+    onNoteChange: (String) -> Unit,
+    onSend: () -> Unit,
 ) {
-    val scope = rememberCoroutineScope()
-    val ctx = LocalContext.current
     val scroll = rememberScrollState()
-
-    var toUserId by remember { mutableStateOf("") }
-    var amount by remember { mutableStateOf("") }
-    var note by remember { mutableStateOf("") }
-    var isLoading by remember { mutableStateOf(false) }
-
-    val nobleBlue = Color(0xFF1A56BE)
-    val textMain = Color(0xFF1F2937)
-    val textSub = Color(0xFF6B7280)
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .verticalScroll(scroll)
-            .padding(vertical = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(24.dp)
+            .verticalScroll(scroll),
+        verticalArrangement = Arrangement.spacedBy(18.dp),
     ) {
         Text(
-            "Send Money",
-            fontSize = 28.sp,
+            text = "Send Money",
+            style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold,
-            color = textMain
         )
 
-        Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            // Recipient ID
-            Text("Recipient ID", fontWeight = FontWeight.SemiBold, color = textSub)
-            OutlinedTextField(
-                value = toUserId,
-                onValueChange = { toUserId = it.trim() },
-                placeholder = { Text("Enter account number or ID") },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                leadingIcon = { Icon(Icons.Default.Person, contentDescription = null, tint = nobleBlue) },
-                singleLine = true
-            )
+        Text(
+            text = "Transfer money securely with a clear and simple form designed for quick confirmation.",
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
 
-            // Amount
-            Text("Amount (ETB)", fontWeight = FontWeight.SemiBold, color = textSub)
-            OutlinedTextField(
-                value = amount,
-                onValueChange = { amount = it.filter(Char::isDigit) },
-                placeholder = { Text("0.00") },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                textStyle = LocalTextStyle.current.copy(fontSize = 20.sp, fontWeight = FontWeight.Bold),
-                singleLine = true
-            )
+        Card(
+            shape = MaterialTheme.shapes.large,
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Column(
+                modifier = Modifier.padding(20.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                OutlinedTextField(
+                    value = state.transferRecipient,
+                    onValueChange = onRecipientChange,
+                    label = { Text("Recipient ID / account") },
+                    placeholder = { Text("Enter recipient ID") },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = MaterialTheme.shapes.medium,
+                    singleLine = true,
+                )
 
-            // Note (Optional)
-            Text("Note (Optional)", fontWeight = FontWeight.SemiBold, color = textSub)
-            OutlinedTextField(
-                value = note,
-                onValueChange = { note = it },
-                placeholder = { Text("What's this for?") },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                singleLine = true
-            )
-        }
+                OutlinedTextField(
+                    value = state.transferAmount,
+                    onValueChange = onAmountChange,
+                    label = { Text("Amount (ETB)") },
+                    placeholder = { Text("0") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = MaterialTheme.shapes.medium,
+                    singleLine = true,
+                )
 
-        Spacer(Modifier.weight(1f))
+                OutlinedTextField(
+                    value = state.transferNote,
+                    onValueChange = onNoteChange,
+                    label = { Text("Note (optional)") },
+                    placeholder = { Text("Add a note") },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = MaterialTheme.shapes.medium,
+                    maxLines = 3,
+                )
 
-        Button(
-            onClick = {
-                val amt = amount.toIntOrNull() ?: 0
-                if (amt <= 0 || toUserId.isBlank()) {
-                    Toast.makeText(ctx, "Please enter valid details", Toast.LENGTH_SHORT).show()
-                    return@Button
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Wallet,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                    )
+                    Text(
+                        text = "Available balance: ${state.wallet?.balance ?: 0} ${state.wallet?.currency ?: "ETB"}",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
                 }
-                scope.launch {
-                    try {
-                        isLoading = true
-                        onStatus("Sending...")
-                        DemoApi.transfer(userId, toUserId, amt, note.ifBlank { "Transfer" })
-                        bumpRefresh()
-                        Toast.makeText(ctx, "Sent Successfully ✅", Toast.LENGTH_LONG).show()
-                        toUserId = ""
-                        amount = ""
-                        note = ""
-                    } catch (e: Exception) {
-                        Toast.makeText(ctx, "Failed: ${e.message}", Toast.LENGTH_SHORT).show()
-                    } finally {
-                        isLoading = false
-                        onStatus("Ready")
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                Button(
+                    onClick = onSend,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp),
+                    enabled = state.canSubmitTransfer && !state.isTransferSubmitting,
+                    shape = MaterialTheme.shapes.medium,
+                ) {
+                    if (state.isTransferSubmitting) {
+                        Text("Sending...")
+                    } else {
+                        Icon(Icons.Default.Send, contentDescription = null)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Send Now")
                     }
                 }
-            },
-            enabled = !isLoading,
-            modifier = Modifier.fillMaxWidth().height(64.dp),
-            shape = RoundedCornerShape(20.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = nobleBlue)
-        ) {
-            if (isLoading) {
-                CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
-            } else {
-                Icon(Icons.Default.Send, contentDescription = null)
-                Spacer(Modifier.width(12.dp))
-                Text("Send Now", fontSize = 20.sp, fontWeight = FontWeight.Bold)
             }
         }
-        
+
         Text(
-            "Payments are secure and encrypted.",
-            modifier = Modifier.fillMaxWidth(),
-            textAlign = TextAlign.Center,
-            color = textSub,
-            fontSize = 12.sp
+            text = "All transactions are encrypted and validated before processing.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
 }

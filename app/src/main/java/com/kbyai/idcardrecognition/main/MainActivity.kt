@@ -12,6 +12,7 @@ import androidx.lifecycle.lifecycleScope
 import com.kbyai.idcardrecognition.payment.demo.setSessionUnlocked
 import com.kbyai.idcardrecognition.security.AppSwitcherBlurOverlay
 import com.kbyai.idcardrecognition.security.SecureScreen
+import com.kbyai.idcardrecognition.theme.MyApplicationTheme
 import com.stripe.android.Stripe
 import kotlinx.coroutines.launch
 
@@ -43,27 +44,29 @@ class MainActivity : FragmentActivity() {
         )
 
         setContent {
-            SecureScreen {
-                // Card scan controller (launcher + scannedCard state)
-                val scan = rememberCardScanController()
+            MyApplicationTheme {
+                SecureScreen {
+                    // Card scan controller (launcher + scannedCard state)
+                    val scan = rememberCardScanController()
 
-                MainApp(
-                    stripe = stripe,
-                    scannedCard = scan.scannedCard,
-                    onScanClick = { scan.startScan() },
-                    setLastTopupAmount = { lastTopupAmount = it },
-                    getRefreshSignal = { refreshSignal },
-                    bumpRefresh = { refreshSignal++ },
-                    getIsPaying = { isPaying },
-                    setIsPaying = { isPaying = it },
-                    getSuccessDialog = { showSuccessDialog },
-                    setSuccessDialog = { showSuccessDialog = it },
-                    getErrorDialog = { showErrorDialog },
-                    setErrorDialog = { showErrorDialog = it },
-                )
+                    MainApp(
+                        stripe = stripe,
+                        scannedCard = scan.scannedCard,
+                        onScanClick = { scan.startScan() },
+                        setLastTopupAmount = { lastTopupAmount = it },
+                        getRefreshSignal = { refreshSignal },
+                        bumpRefresh = { refreshSignal++ },
+                        getIsPaying = { isPaying },
+                        setIsPaying = { isPaying = it },
+                        getSuccessDialog = { showSuccessDialog },
+                        setSuccessDialog = { showSuccessDialog = it },
+                        getErrorDialog = { showErrorDialog },
+                        setErrorDialog = { showErrorDialog = it },
+                    )
 
-                // overlay فوق كل حاجة
-//                AppSwitcherBlurOverlay(show = blurForRecents)
+                    // overlay فوق كل حاجة
+//                    AppSwitcherBlurOverlay(show = blurForRecents)
+                }
             }
         }
     }

@@ -1,11 +1,14 @@
 package com.kbyai.idcardrecognition
 
 import android.app.Application
+import com.kbyai.idcardrecognition.di.appModule
 import com.kbyai.idsdk.IDSDK
 import com.stripe.android.PaymentConfiguration
 import com.stripe.android.Stripe
 //import company.tap.gosellapi.GoSellSDK
 import io.scanbot.sdk.ScanbotSDKInitializer
+import org.koin.android.ext.koin.androidContext
+import org.koin.core.context.startKoin
 
 class App : Application() {
 
@@ -29,6 +32,11 @@ class App : Application() {
 
     override fun onCreate() {
     super.onCreate()
+
+      startKoin {
+          androidContext(this@App)
+          modules(appModule)
+      }
 
 //    GoSellSDK.init(this, "sk_test_xxx", packageName)
 //    GoSellSDK.setLocale("ar") // أو "ar"

@@ -2,12 +2,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-<!--    // Add the permissions here:-->
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-feature android:name="android.hardware.camera" />
     <uses-permission android:name="android.permission.INTERNET" />
-<!--    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />-->
-<!--    <uses-feature android:name="android.hardware.camera.autofocus" />-->
     <uses-permission android:name="android.permission.USE_BIOMETRIC" />
 
     <application
@@ -36,12 +33,6 @@
             </intent-filter>
         </activity>
 
-        <!--<activity android:name=".payment.tap.TapAddCardActivity" />-->
-<!--        <activity-->
-<!--            android:name=".payment.ver_id_2.OcrScanActivity"-->
-<!--            android:screenOrientation="portrait"-->
-<!--            android:exported="false" />-->
-
 
         <meta-data
             android:name="com.appliedrec.verid.password"
@@ -51,11 +42,6 @@
             android:name=".payment.idcardrecognition.CameraActivityKt"
             android:exported="false" />
 
-
-<!--        <activity-->
-<!--            android:name="com.example.ethiopay.payment.idcardrecognition.ResultActivity"-->
-<!--            android:exported="false"-->
-<!--            android:screenOrientation="portrait" />-->
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="com.kbyai.idcardrecognition.fileprovider"

@@ -11,19 +11,42 @@ import kotlinx.coroutines.flow.callbackFlow
 import java.util.concurrent.TimeUnit
 
 sealed interface PhoneAuthResult {
-  data class CodeSent(val verificationId: String, val token: PhoneAuthProvider.ForceResendingToken) : PhoneAuthResult
+  data class CodeSent(
+    val verificationId: String,
+    val token: PhoneAuthProvider.ForceResendingToken?,
+  ) : PhoneAuthResult
   data class Verified(val credential: PhoneAuthCredential) : PhoneAuthResult
   data class Error(val msg: String) : PhoneAuthResult
 }
 
-class PhoneAuthRepository(
-  private val auth: FirebaseAuth = FirebaseAuth.getInstance()
-) {
+interface PhoneAuthGateway {
   fun sendOtp(
-    activity: Activity,
+    activity: Activity?,
     phoneE164: String,
     resendToken: PhoneAuthProvider.ForceResendingToken? = null
+  ): kotlinx.coroutines.flow.Flow<PhoneAuthResult>
+
+  suspend fun signInWithCredential(credential: PhoneAuthCredential): Result<Unit>
+
+  fun credentialFromCode(verificationId: String, code: String): PhoneAuthCredential
+
+  fun currentIdentity(): FirebaseIdentity?
+}
+
+class PhoneAuthRepository(
+  private val auth: FirebaseAuth = FirebaseAuth.getInstance()
+) : PhoneAuthGateway {
+  override
+  fun sendOtp(
+    activity: Activity?,
+    phoneE164: String,
+    resendToken: PhoneAuthProvider.ForceResendingToken?
   ) = callbackFlow<PhoneAuthResult> {
+    if (activity == null) {
+      trySend(PhoneAuthResult.Error("Activity is required to start phone verification"))
+      close()
+      return@callbackFlow
+    }
 
     val callbacks = object : PhoneAuthProvider.OnVerificationStateChangedCallbacks() {
       override fun onVerificationCompleted(credential: PhoneAuthCredential) {
@@ -55,6 +78,7 @@ class PhoneAuthRepository(
     awaitClose { /* no-op */ }
   }
 
+  override
   suspend fun signInWithCredential(credential: PhoneAuthCredential): Result<Unit> {
     return try {
       auth.signInWithCredential(credential).await()
@@ -64,6 +88,16 @@ class PhoneAuthRepository(
     }
   }
 
+  override
   fun credentialFromCode(verificationId: String, code: String): PhoneAuthCredential =
     PhoneAuthProvider.getCredential(verificationId, code)
+
+  override
+  fun currentIdentity(): FirebaseIdentity? {
+    val user = auth.currentUser ?: return null
+    return FirebaseIdentity(
+      uid = user.uid,
+      phoneNumber = user.phoneNumber,
+    )
+  }
 }

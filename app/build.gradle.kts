@@ -1,8 +1,51 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import java.util.Properties
+
+fun Project.readSigningValue(
+    properties: Properties,
+    propertyName: String,
+    envName: String,
+): String? = properties.getProperty(propertyName)
+    ?: findProperty(propertyName)?.toString()
+    ?: System.getenv(envName)
+
+val signingProperties = Properties()
+val signingPropertiesFile = rootProject.file("keystore.properties")
+if (signingPropertiesFile.exists()) {
+    signingPropertiesFile.inputStream().use(signingProperties::load)
+}
+
+val defaultReleaseKeystorePath = "${System.getProperty("user.home")}/Desktop/EtioPay.jks"
+val releaseStoreFilePath = project.readSigningValue(
+    properties = signingProperties,
+    propertyName = "etiopay.storeFile",
+    envName = "ETIOPAY_STORE_FILE",
+) ?: defaultReleaseKeystorePath
+val releaseStorePassword = project.readSigningValue(
+    properties = signingProperties,
+    propertyName = "etiopay.storePassword",
+    envName = "ETIOPAY_STORE_PASSWORD",
+)
+val releaseKeyAlias = project.readSigningValue(
+    properties = signingProperties,
+    propertyName = "etiopay.keyAlias",
+    envName = "ETIOPAY_KEY_ALIAS",
+) ?: "key0"
+val releaseKeyPassword = project.readSigningValue(
+    properties = signingProperties,
+    propertyName = "etiopay.keyPassword",
+    envName = "ETIOPAY_KEY_PASSWORD",
+) ?: releaseStorePassword
+val hasReleaseSigning =
+    releaseStorePassword != null &&
+        releaseKeyPassword != null &&
+        file(releaseStoreFilePath).exists()
 
 plugins {
     alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    id("org.jetbrains.kotlin.kapt")
     id("com.google.gms.google-services")
     alias(libs.plugins.google.firebase.crashlytics)
 }
@@ -36,6 +79,17 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        if (hasReleaseSigning) {
+            create("release") {
+                storeFile = file(releaseStoreFilePath)
+                storePassword = releaseStorePassword
+                keyAlias = releaseKeyAlias
+                keyPassword = releaseKeyPassword
+            }
+        }
+    }
+
     buildTypes {
         debug {
             buildConfigField("boolean", "DEMO_MODE", "false")
@@ -56,6 +110,10 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+
+            if (hasReleaseSigning) {
+                signingConfig = signingConfigs.getByName("release")
+            }
         }
 
     }
@@ -82,6 +140,7 @@ kotlin {
 dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.10.0")
     implementation(libs.androidx.activity.compose)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui)
@@ -129,4 +188,27 @@ dependencies {
 
     implementation(libs.material)
 
+    implementation("io.insert-koin:koin-android:3.5.6")
+    implementation("io.insert-koin:koin-androidx-compose:3.5.6")
+
+    implementation("com.squareup.retrofit2:retrofit:2.11.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.11.0")
+    implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
+
+    implementation("androidx.room:room-runtime:2.8.4")
+    implementation("androidx.room:room-ktx:2.8.4")
+    kapt("androidx.room:room-compiler:2.8.4")
+
+    testImplementation(libs.junit)
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.1")
+
+    androidTestImplementation(platform(libs.androidx.compose.bom))
+    androidTestImplementation(libs.androidx.junit)
+    androidTestImplementation(libs.androidx.espresso.core)
+    androidTestImplementation(libs.androidx.compose.ui.test.junit4)
+    debugImplementation(libs.androidx.compose.ui.test.manifest)
+}
+
+kapt {
+    correctErrorTypes = true
 }
