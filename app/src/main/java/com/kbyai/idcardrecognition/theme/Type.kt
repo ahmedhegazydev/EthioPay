@@ -6,20 +6,20 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 
-private val NobleFontFamily = FontFamily.Default
+private val NobleFontFamily = FontFamily.SansSerif
 
 val Typography = Typography(
     headlineLarge = TextStyle(
         fontFamily = NobleFontFamily,
-        fontWeight = FontWeight.Bold,
-        fontSize = 32.sp,
-        lineHeight = 38.sp,
+        fontWeight = FontWeight.ExtraBold,
+        fontSize = 38.sp,
+        lineHeight = 44.sp,
     ),
     headlineMedium = TextStyle(
         fontFamily = NobleFontFamily,
         fontWeight = FontWeight.Bold,
-        fontSize = 28.sp,
-        lineHeight = 34.sp,
+        fontSize = 32.sp,
+        lineHeight = 38.sp,
     ),
     titleLarge = TextStyle(
         fontFamily = NobleFontFamily,
@@ -36,22 +36,22 @@ val Typography = Typography(
     bodyLarge = TextStyle(
         fontFamily = NobleFontFamily,
         fontWeight = FontWeight.Normal,
-        fontSize = 16.sp,
-        lineHeight = 24.sp,
-        letterSpacing = 0.2.sp,
+        fontSize = 17.sp,
+        lineHeight = 26.sp,
+        letterSpacing = 0.sp,
     ),
     bodyMedium = TextStyle(
         fontFamily = NobleFontFamily,
         fontWeight = FontWeight.Normal,
         fontSize = 15.sp,
         lineHeight = 22.sp,
-        letterSpacing = 0.1.sp,
+        letterSpacing = 0.sp,
     ),
     labelLarge = TextStyle(
         fontFamily = NobleFontFamily,
-        fontWeight = FontWeight.Medium,
-        fontSize = 15.sp,
-        lineHeight = 20.sp,
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 17.sp,
+        lineHeight = 24.sp,
     ),
     labelMedium = TextStyle(
         fontFamily = NobleFontFamily,

@@ -1,5 +1,7 @@
 package com.kbyai.idcardrecognition.noble.ui.home
 
+import com.kbyai.idcardrecognition.login.AuthValidation
+
 internal object NobleHomeReducer {
 
     fun reduce(
@@ -17,7 +19,7 @@ internal object NobleHomeReducer {
         )
 
         is NobleHomeChange.TransferAmountChanged -> previous.copy(
-            transferAmount = change.value.filter(Char::isDigit),
+            transferAmount = AuthValidation.normalizeNumericInput(change.value),
             errorMessage = null,
             message = null,
         )
@@ -29,7 +31,7 @@ internal object NobleHomeReducer {
         )
 
         is NobleHomeChange.PaymentAmountChanged -> previous.copy(
-            paymentAmount = change.value.filter(Char::isDigit),
+            paymentAmount = AuthValidation.normalizeNumericInput(change.value),
             errorMessage = null,
         )
 

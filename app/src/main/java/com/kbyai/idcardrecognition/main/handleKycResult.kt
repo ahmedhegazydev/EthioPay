@@ -2,10 +2,12 @@ package com.kbyai.idcardrecognition.main
 
 import android.content.Context
 import androidx.navigation.NavHostController
+import com.kbyai.idcardrecognition.noble.data.NobleCloudStore
 import com.kbyai.idcardrecognition.payment.demo.getSavedIdHash
 import com.kbyai.idcardrecognition.payment.demo.saveKycHash
 import com.kbyai.idcardrecognition.payment.idcardrecognition.canonicalDocNumber
 import com.kbyai.idcardrecognition.payment.models.Screen
+import org.koin.core.context.GlobalContext
 import org.json.JSONObject
 import java.security.MessageDigest
 import java.util.Locale
@@ -58,6 +60,11 @@ suspend fun handleKycResult(
 
         if (saved == null) {
             saveKycHash(context, newHash)
+            syncKycToCloud(
+                userId = prismaUserIdState,
+                idHash = newHash,
+                documentNumber = docId,
+            )
             navController.navigate(Screen.Home.route) {
                 popUpTo(Screen.Kyc.route) { inclusive = true }
                 launchSingleTop = true
@@ -71,6 +78,11 @@ suspend fun handleKycResult(
             return
         }
 
+        syncKycToCloud(
+            userId = prismaUserIdState,
+            idHash = newHash,
+            documentNumber = docId,
+        )
         navController.navigate(Screen.Home.route) {
             popUpTo(Screen.Kyc.route) { inclusive = true }
             launchSingleTop = true
@@ -103,4 +115,20 @@ fun buildIdHash(
 
     val bytes = MessageDigest.getInstance("SHA-256").digest(payload.toByteArray())
     return bytes.joinToString("") { "%02x".format(it) }
+}
+
+private suspend fun syncKycToCloud(
+    userId: String?,
+    idHash: String,
+    documentNumber: String,
+) {
+    if (userId.isNullOrBlank()) return
+
+    runCatching<Unit> {
+        GlobalContext.get().get<NobleCloudStore>().markKycSubmitted(
+            userId = userId,
+            idHash = idHash,
+            documentNumber = documentNumber,
+        )
+    }
 }

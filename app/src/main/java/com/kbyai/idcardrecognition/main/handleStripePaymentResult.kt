@@ -3,12 +3,13 @@ package com.kbyai.idcardrecognition.main
 import android.content.Intent
 import android.widget.Toast
 import androidx.lifecycle.lifecycleScope
-import com.kbyai.idcardrecognition.payment.demo.DemoApi
+import com.kbyai.idcardrecognition.noble.data.NobleRepository
 import com.stripe.android.ApiResultCallback
 import com.stripe.android.PaymentIntentResult
 import com.stripe.android.Stripe
 import com.stripe.android.model.StripeIntent
 import kotlinx.coroutines.launch
+import org.koin.core.context.GlobalContext
 
 fun handleStripePaymentResult(
     activity: MainActivity,
@@ -46,7 +47,7 @@ fun handleStripePaymentResult(
                                     Toast.makeText(activity, "User not ready. Please login again.", Toast.LENGTH_LONG).show()
                                     return@launch
                                 }
-                                DemoApi.topup(uid, amt)
+                                GlobalContext.get().get<NobleRepository>().topUpWallet(uid, amt)
                                 bumpRefresh()
                             } catch (e: Exception) {
                                 Toast.makeText(activity, "Topup error: ${e.message}", Toast.LENGTH_LONG).show()

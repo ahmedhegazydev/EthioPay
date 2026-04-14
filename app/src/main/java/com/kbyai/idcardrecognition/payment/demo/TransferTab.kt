@@ -13,14 +13,11 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Send
 import androidx.compose.material.icons.filled.Wallet
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -29,6 +26,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.kbyai.idcardrecognition.noble.ui.home.NobleHomeUiState
+import com.kbyai.idcardrecognition.noble.ui.components.NobleInputField
+import com.kbyai.idcardrecognition.noble.ui.components.NoblePrimaryButton
 
 @Composable
 fun TransferTab(
@@ -68,35 +67,31 @@ fun TransferTab(
                 modifier = Modifier.padding(20.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
-                OutlinedTextField(
+                NobleInputField(
                     value = state.transferRecipient,
                     onValueChange = onRecipientChange,
-                    label = { Text("Recipient ID / account") },
-                    placeholder = { Text("Enter recipient ID") },
+                    label = "Recipient ID / account",
+                    placeholder = "Enter recipient ID",
                     modifier = Modifier.fillMaxWidth(),
-                    shape = MaterialTheme.shapes.medium,
-                    singleLine = true,
                 )
 
-                OutlinedTextField(
+                NobleInputField(
                     value = state.transferAmount,
                     onValueChange = onAmountChange,
-                    label = { Text("Amount (ETB)") },
-                    placeholder = { Text("0") },
+                    label = "Amount (ETB)",
+                    placeholder = "0",
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     modifier = Modifier.fillMaxWidth(),
-                    shape = MaterialTheme.shapes.medium,
-                    singleLine = true,
                 )
 
-                OutlinedTextField(
+                NobleInputField(
                     value = state.transferNote,
                     onValueChange = onNoteChange,
-                    label = { Text("Note (optional)") },
-                    placeholder = { Text("Add a note") },
+                    label = "Note (optional)",
+                    placeholder = "Add a note",
                     modifier = Modifier.fillMaxWidth(),
-                    shape = MaterialTheme.shapes.medium,
                     maxLines = 3,
+                    singleLine = false,
                 )
 
                 Row(
@@ -118,22 +113,15 @@ fun TransferTab(
 
                 Spacer(modifier = Modifier.height(4.dp))
 
-                Button(
+                NoblePrimaryButton(
+                    text = if (state.isTransferSubmitting) "Sending..." else "Send Now",
                     onClick = onSend,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(56.dp),
                     enabled = state.canSubmitTransfer && !state.isTransferSubmitting,
-                    shape = MaterialTheme.shapes.medium,
-                ) {
-                    if (state.isTransferSubmitting) {
-                        Text("Sending...")
-                    } else {
-                        Icon(Icons.Default.Send, contentDescription = null)
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Send Now")
-                    }
-                }
+                    isLoading = state.isTransferSubmitting,
+                )
             }
         }
 

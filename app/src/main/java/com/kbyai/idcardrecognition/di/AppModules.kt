@@ -2,16 +2,17 @@ package com.kbyai.idcardrecognition.di
 
 import androidx.room.Room
 import com.google.firebase.auth.FirebaseAuth
-import com.kbyai.idcardrecognition.login.AuthApiService
+import com.google.firebase.firestore.FirebaseFirestore
 import com.kbyai.idcardrecognition.login.AuthSessionGateway
 import com.kbyai.idcardrecognition.login.AuthSessionRepository
 import com.kbyai.idcardrecognition.login.AuthViewModel
 import com.kbyai.idcardrecognition.login.PhoneAuthGateway
 import com.kbyai.idcardrecognition.login.PhoneAuthRepository
+import com.kbyai.idcardrecognition.noble.data.FirestoreNobleCloudStore
+import com.kbyai.idcardrecognition.noble.data.NobleCloudStore
 import com.kbyai.idcardrecognition.noble.data.NobleRepository
 import com.kbyai.idcardrecognition.noble.data.NobleRepositoryImpl
 import com.kbyai.idcardrecognition.noble.data.local.NobleDatabase
-import com.kbyai.idcardrecognition.noble.data.remote.NobleApiService
 import com.kbyai.idcardrecognition.noble.ui.home.NobleHomeViewModel
 import com.kbyai.idcardrecognition.payment.demo.DemoApi
 import okhttp3.OkHttpClient
@@ -25,7 +26,9 @@ import java.util.concurrent.TimeUnit
 
 val appModule = module {
     single { FirebaseAuth.getInstance() }
+    single { FirebaseFirestore.getInstance() }
     single<PhoneAuthGateway> { PhoneAuthRepository(get()) }
+    single<NobleCloudStore> { FirestoreNobleCloudStore(get()) }
 
     single {
         HttpLoggingInterceptor().apply {
@@ -48,9 +51,6 @@ val appModule = module {
             .addConverterFactory(GsonConverterFactory.create())
             .build()
     }
-
-    single { get<Retrofit>().create(NobleApiService::class.java) }
-    single { get<Retrofit>().create(AuthApiService::class.java) }
     single<AuthSessionGateway> { AuthSessionRepository(get(), get(), get()) }
 
     single {

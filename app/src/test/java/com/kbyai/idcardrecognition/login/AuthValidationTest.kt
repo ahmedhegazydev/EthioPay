@@ -12,8 +12,9 @@ class AuthValidationTest {
     }
 
     @Test
-    fun `normalize phone prefixes local numbers with egypt code`() {
+    fun `normalize phone supports local egypt and ethiopia numbers`() {
         assertEquals("+201001234567", AuthValidation.normalizePhone("01001234567"))
+        assertEquals("+251911111111", AuthValidation.normalizePhone("0911111111"))
         assertEquals("+251911111111", AuthValidation.normalizePhone("+251911111111"))
     }
 
@@ -26,5 +27,12 @@ class AuthValidationTest {
         assertEquals("ابعت OTP الأول", AuthValidation.validateOtpSubmission(missingVerification))
         assertEquals("اكتب الكود 6 أرقام", AuthValidation.validateOtpSubmission(shortOtp))
         assertNull(AuthValidation.validateOtpSubmission(valid))
+    }
+
+    @Test
+    fun `normalizers convert arabic digits to ascii`() {
+        assertEquals("+251911111111", AuthValidation.normalizePhone("٠٩١١١١١١١١"))
+        assertEquals("123456", AuthValidation.normalizeOtp("١٢٣٤٥٦"))
+        assertEquals("2500", AuthValidation.normalizeNumericInput("٢٥٠٠"))
     }
 }

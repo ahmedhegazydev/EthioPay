@@ -25,7 +25,6 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -35,6 +34,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kbyai.idcardrecognition.noble.ui.home.NobleHomeUiState
+import com.kbyai.idcardrecognition.noble.ui.components.NobleInputField
 import com.kbyai.idcardrecognition.payment.models.ScannedCardUi
 import com.kbyai.idcardrecognition.payment.stripe.PayWithScannedCard
 import com.stripe.android.Stripe
@@ -176,13 +176,13 @@ fun WalletTab(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
 
-                    OutlinedTextField(
+                    NobleInputField(
                         value = state.paymentAmount,
                         onValueChange = onPaymentAmountChange,
-                        label = { Text("Amount to pay") },
+                        label = "Amount to pay",
+                        placeholder = "1000",
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(16.dp),
                     )
 
                     PayWithScannedCard(

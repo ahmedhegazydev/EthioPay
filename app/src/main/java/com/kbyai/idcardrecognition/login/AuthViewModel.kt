@@ -31,7 +31,7 @@ class AuthViewModel(
             is AuthEvent.PhoneChanged -> {
                 _state.update {
                     it.copy(
-                        phone = e.v,
+                        phone = AuthValidation.sanitizePhoneInput(e.v),
                         message = null
                         // اختياري: لو عايز تمسح verificationId لما يغير الرقم:
                         // verificationId = null,
@@ -39,7 +39,12 @@ class AuthViewModel(
                     )
                 }
             }
-            is AuthEvent.OtpChanged -> _state.update { it.copy(otp = e.v, message = null) }
+            is AuthEvent.OtpChanged -> _state.update {
+                it.copy(
+                    otp = AuthValidation.normalizeOtp(e.v),
+                    message = null,
+                )
+            }
             AuthEvent.BackToPhone -> {
                 resendJob?.cancel()
                 _state.update {
@@ -64,6 +69,8 @@ class AuthViewModel(
     }
 
     private fun sendOtp(activity: Activity?) {
+        if (_state.value.isSendingOtp || _state.value.isCompletingLogin) return
+
         val phone = _state.value.phone.trim()
         val phoneError = AuthValidation.validatePhoneForOtp(phone)
         if (phoneError != null) {
@@ -131,16 +138,19 @@ class AuthViewModel(
 
     private fun verifyOtp() {
         val st = _state.value
+        if (st.isVerifying || st.isCompletingLogin) return
+
         val validationError = AuthValidation.validateOtpSubmission(st)
         if (validationError != null) {
             _state.update { it.copy(message = validationError) }
             return
         }
         val vid = checkNotNull(st.verificationId)
+        val normalizedOtp = AuthValidation.normalizeOtp(st.otp)
 
         // ✅ Simulation
         if (BuildConfig.SIMULATE_OTP) {
-            if (st.otp.trim() != "123456") {
+            if (normalizedOtp != "123456") {
                 _state.update {
                     it.copy(
                         isVerifying = false,
@@ -157,7 +167,7 @@ class AuthViewModel(
 
         _state.update { it.copy(isVerifying = true, message = null) }
 
-        val cred = repo.credentialFromCode(vid, st.otp)
+        val cred = repo.credentialFromCode(vid, normalizedOtp)
         completeVerifiedCredential(cred, source = "otp-code")
     }
 
@@ -252,7 +262,7 @@ class AuthViewModel(
             )
 
             if (exchangeResult.isSuccess) {
-                val prismaUserId = exchangeResult.getOrNull().orEmpty()
+                val prismaUserId = exchangeResult.getOrNull().orEmpty().ifBlank { identity.uid }
                 sessionGateway.persistResolvedAuth(
                     prismaUserId = prismaUserId,
                     firebaseUid = identity.uid,

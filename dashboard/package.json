@@ -1,0 +1,12 @@
+{
+  "name": "noble-fintech-dashboard",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Noble fintech Firebase dashboard",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": "20.x"
+  }
+}

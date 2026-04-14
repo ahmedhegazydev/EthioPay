@@ -24,12 +24,9 @@ import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
-import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Snackbar
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -49,6 +46,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.kbyai.idcardrecognition.BuildConfig
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.kbyai.idcardrecognition.noble.ui.components.NobleInputField
+import com.kbyai.idcardrecognition.noble.ui.components.NoblePrimaryButton
+import com.kbyai.idcardrecognition.noble.ui.components.NobleTextAction
+import com.kbyai.idcardrecognition.payment.stripe.findActivity
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
@@ -58,15 +59,33 @@ fun FirebasePhoneAuthScreen(
     val vm: AuthViewModel = koinViewModel()
     val st by vm.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
-    val activity = remember(context) { context as Activity }
+    val activity = remember(context) { context.findActivity() }
     val scrollState = rememberScrollState()
     var handledUserId by rememberSaveable { mutableStateOf<String?>(null) }
+    var autoSubmittedOtp by rememberSaveable(st.verificationId) { mutableStateOf<String?>(null) }
 
     LaunchedEffect(st.prismaUserId) {
         val prismaUserId = st.prismaUserId ?: return@LaunchedEffect
         if (handledUserId == prismaUserId) return@LaunchedEffect
         handledUserId = prismaUserId
         onLoginSuccess(prismaUserId)
+    }
+
+    LaunchedEffect(st.verificationId, st.otp, st.isVerifying, st.isCompletingLogin) {
+        if (st.otp.length < 6) {
+            autoSubmittedOtp = null
+            return@LaunchedEffect
+        }
+
+        if (
+            st.verificationId != null &&
+            !st.isVerifying &&
+            !st.isCompletingLogin &&
+            autoSubmittedOtp != st.otp
+        ) {
+            autoSubmittedOtp = st.otp
+            vm.onEvent(AuthEvent.VerifyOtp)
+        }
     }
 
     Box(
@@ -113,40 +132,26 @@ fun FirebasePhoneAuthScreen(
                 }
 
                 if (st.verificationId == null) {
-                    OutlinedTextField(
+                    NobleInputField(
                         value = st.phone,
                         onValueChange = { vm.onEvent(AuthEvent.PhoneChanged(it)) },
-                        label = { Text("Phone Number") },
-                        placeholder = { Text("+251 912 345 678") },
-                        leadingIcon = {
-                            Icon(Icons.Default.PhoneAndroid, contentDescription = null)
-                        },
+                        label = "Phone Number",
+                        placeholder = "+251 912 345 678",
+                        leadingIcon = Icons.Default.PhoneAndroid,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
                         modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-                        shape = RoundedCornerShape(24.dp),
                     )
 
-                    Button(
+                    NoblePrimaryButton(
+                        text = "Send OTP",
                         onClick = { vm.onEvent(AuthEvent.SendOtp(activity)) },
-                        enabled = !st.isSendingOtp && st.resendSecondsLeft == 0,
+                        enabled = st.resendSecondsLeft == 0,
+                        isLoading = st.isSendingOtp,
+                        leadingIcon = Icons.AutoMirrored.Filled.Send,
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(56.dp),
-                        shape = RoundedCornerShape(24.dp),
-                    ) {
-                        if (st.isSendingOtp) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(20.dp),
-                                strokeWidth = 2.dp,
-                                color = MaterialTheme.colorScheme.onPrimary,
-                            )
-                        } else {
-                            Icon(Icons.AutoMirrored.Filled.Send, contentDescription = null)
-                            Spacer(modifier = Modifier.size(8.dp))
-                            Text("Send OTP", fontWeight = FontWeight.SemiBold)
-                        }
-                    }
+                    )
 
                     Text(
                         text = "Your information is secure and encrypted.",
@@ -156,54 +161,37 @@ fun FirebasePhoneAuthScreen(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 } else {
-                    OutlinedTextField(
+                    NobleInputField(
                         value = st.otp,
-                        onValueChange = {
-                            vm.onEvent(AuthEvent.OtpChanged(it.filter(Char::isDigit).take(6)))
-                        },
-                        label = { Text("Verification Code") },
-                        placeholder = { Text("Enter 6-digit code") },
-                        leadingIcon = {
-                            Icon(Icons.Default.CheckCircle, contentDescription = null)
-                        },
+                        onValueChange = { vm.onEvent(AuthEvent.OtpChanged(it)) },
+                        label = "Verification Code",
+                        placeholder = "Enter 6-digit code",
+                        leadingIcon = Icons.Default.CheckCircle,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-                        shape = RoundedCornerShape(24.dp),
                     )
 
-                    Button(
+                    NoblePrimaryButton(
+                        text = "Verify & Continue",
                         onClick = { vm.onEvent(AuthEvent.VerifyOtp) },
-                        enabled = st.otp.length == 6 && !st.isVerifying && !st.isCompletingLogin,
+                        enabled = st.otp.length == 6,
+                        isLoading = st.isVerifying || st.isCompletingLogin,
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(56.dp),
-                        shape = RoundedCornerShape(24.dp),
-                    ) {
-                        if (st.isVerifying || st.isCompletingLogin) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(20.dp),
-                                strokeWidth = 2.dp,
-                                color = MaterialTheme.colorScheme.onPrimary,
-                            )
-                        } else {
-                            Text("Verify & Continue", fontWeight = FontWeight.SemiBold)
-                        }
-                    }
+                    )
 
-                    TextButton(
+                    NobleTextAction(
+                        text = if (st.resendSecondsLeft > 0) {
+                            "Resend in ${formatTimer(st.resendSecondsLeft)}"
+                        } else {
+                            "Resend Code"
+                        },
+                        leadingIcon = if (st.resendSecondsLeft > 0) null else Icons.Default.Refresh,
                         onClick = { vm.onEvent(AuthEvent.SendOtp(activity)) },
                         enabled = !st.isSendingOtp && st.resendSecondsLeft == 0,
                         modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        if (st.resendSecondsLeft > 0) {
-                            Text("Resend in ${formatTimer(st.resendSecondsLeft)}")
-                        } else {
-                            Icon(Icons.Default.Refresh, contentDescription = null)
-                            Spacer(modifier = Modifier.size(6.dp))
-                            Text("Resend Code")
-                        }
-                    }
+                    )
                 }
 
                 if (BuildConfig.SIMULATE_OTP) {

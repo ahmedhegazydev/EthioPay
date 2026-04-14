@@ -2,13 +2,11 @@ package com.kbyai.idcardrecognition.login
 
 import android.content.Context
 import com.google.firebase.auth.FirebaseAuth
+import com.kbyai.idcardrecognition.noble.data.NobleCloudStore
 import com.kbyai.idcardrecognition.payment.demo.clearAuthData
 import com.kbyai.idcardrecognition.payment.demo.getOrCreateUdid
 import com.kbyai.idcardrecognition.payment.demo.getSavedAuthSnapshot
 import com.kbyai.idcardrecognition.payment.demo.saveAuthData
-import retrofit2.HttpException
-import java.io.IOException
-import java.net.SocketTimeoutException
 
 interface AuthSessionGateway {
     suspend fun exchangeFirebaseAuth(firebaseUid: String, phone: String?): Result<String>
@@ -21,18 +19,18 @@ interface AuthSessionGateway {
 class AuthSessionRepository(
     private val context: Context,
     private val auth: FirebaseAuth,
-    private val api: AuthApiService,
+    private val cloudStore: NobleCloudStore,
 ) : AuthSessionGateway {
 
     override suspend fun exchangeFirebaseAuth(firebaseUid: String, phone: String?): Result<String> {
         return runCatching {
-            api.exchangeFirebaseAuth(
-                FirebaseAuthExchangeRequest(
-                    firebaseUid = firebaseUid,
-                    phone = phone,
-                )
-            ).userId
-        }.mapFailure(::mapExchangeError)
+            cloudStore.ensureUserProfile(
+                firebaseUid = firebaseUid,
+                phone = phone,
+            )
+        }.recoverCatching {
+            firebaseUid
+        }
     }
 
     override suspend fun persistResolvedAuth(prismaUserId: String, firebaseUid: String) {
@@ -57,30 +55,4 @@ class AuthSessionRepository(
         auth.signOut()
         clearAuthData(context)
     }
-
-    private fun mapExchangeError(throwable: Throwable): Throwable = when (throwable) {
-        is SocketTimeoutException -> IllegalStateException(
-            "Backend auth request timed out, please retry.",
-            throwable,
-        )
-
-        is HttpException -> IllegalStateException(
-            throwable.response()?.errorBody()?.string()
-                ?.takeIf { it.isNotBlank() }
-                ?: "Backend auth request failed.",
-            throwable,
-        )
-
-        is IOException -> IllegalStateException(
-            "Couldn't reach the backend. Check your connection and retry.",
-            throwable,
-        )
-
-        else -> throwable
-    }
-}
-
-private inline fun <T> Result<T>.mapFailure(transform: (Throwable) -> Throwable): Result<T> {
-    val failure = exceptionOrNull() ?: return this
-    return Result.failure(transform(failure))
 }

@@ -3,13 +3,9 @@ package com.kbyai.idcardrecognition.noble.data
 import com.kbyai.idcardrecognition.noble.data.local.NobleDao
 import com.kbyai.idcardrecognition.noble.data.local.TransactionCacheEntity
 import com.kbyai.idcardrecognition.noble.data.local.WalletCacheEntity
-import com.kbyai.idcardrecognition.noble.data.remote.NobleApiService
-import com.kbyai.idcardrecognition.noble.data.remote.TopUpRequest
-import com.kbyai.idcardrecognition.noble.data.remote.TransactionEnvelopeResponse
-import com.kbyai.idcardrecognition.noble.data.remote.TransactionResponse
-import com.kbyai.idcardrecognition.noble.data.remote.TransactionsResponse
-import com.kbyai.idcardrecognition.noble.data.remote.TransferRequest
-import com.kbyai.idcardrecognition.noble.data.remote.WalletResponse
+import com.kbyai.idcardrecognition.noble.domain.NobleHomeSnapshot
+import com.kbyai.idcardrecognition.noble.domain.NobleTransaction
+import com.kbyai.idcardrecognition.noble.domain.NobleWallet
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -35,7 +31,7 @@ class NobleRepositoryImplTest {
                 )
             )
         }
-        val repository = NobleRepositoryImpl(api = FakeNobleApiService(), dao = dao)
+        val repository = NobleRepositoryImpl(cloudStore = FakeNobleCloudStore(), dao = dao)
 
         val snapshot = repository.loadCachedHome("user-1")
 
@@ -45,24 +41,11 @@ class NobleRepositoryImplTest {
 
     @Test
     fun `sync home stores fresh wallet and transactions in cache`() = runTest {
-        val api = FakeNobleApiService().apply {
-            walletResponse = WalletResponse("user-1", "ETB", 1200)
-            transactionsResponse = TransactionsResponse(
-                items = listOf(
-                    TransactionResponse(
-                        id = "tx-2",
-                        fromUserId = "user-1",
-                        toUserId = "user-3",
-                        amount = 400,
-                        status = "completed",
-                        note = "Rent",
-                        createdAt = "2026-04-14T11:00:00Z",
-                    )
-                )
-            )
+        val cloudStore = FakeNobleCloudStore().apply {
+            syncedSnapshot = homeSnapshot(balance = 1200, transactionId = "tx-2")
         }
         val dao = FakeNobleDao()
-        val repository = NobleRepositoryImpl(api = api, dao = dao)
+        val repository = NobleRepositoryImpl(cloudStore = cloudStore, dao = dao)
 
         val snapshot = repository.syncHome("user-1")
 
@@ -73,24 +56,11 @@ class NobleRepositoryImplTest {
 
     @Test
     fun `transfer money sends request then reloads latest home snapshot`() = runTest {
-        val api = FakeNobleApiService().apply {
-            walletResponse = WalletResponse("user-1", "ETB", 600)
-            transactionsResponse = TransactionsResponse(
-                items = listOf(
-                    TransactionResponse(
-                        id = "tx-3",
-                        fromUserId = "user-1",
-                        toUserId = "user-9",
-                        amount = 200,
-                        status = "completed",
-                        note = "Dinner",
-                        createdAt = "2026-04-14T12:00:00Z",
-                    )
-                )
-            )
+        val cloudStore = FakeNobleCloudStore().apply {
+            transferSnapshot = homeSnapshot(balance = 600, transactionId = "tx-3")
         }
         val dao = FakeNobleDao()
-        val repository = NobleRepositoryImpl(api = api, dao = dao)
+        val repository = NobleRepositoryImpl(cloudStore = cloudStore, dao = dao)
 
         val snapshot = repository.transferMoney(
             fromUserId = "user-1",
@@ -100,13 +70,13 @@ class NobleRepositoryImplTest {
         )
 
         assertEquals(
-            TransferRequest(
+            TransferCall(
                 fromUserId = "user-1",
                 toUserId = "user-9",
                 amount = 200,
                 note = "Dinner",
             ),
-            api.lastTransferRequest,
+            cloudStore.lastTransferCall,
         )
         assertEquals(600, snapshot.wallet?.balance)
         assertEquals("tx-3", snapshot.transactions.single().id)
@@ -114,50 +84,59 @@ class NobleRepositoryImplTest {
 
     @Test
     fun `top up wallet caches returned balance`() = runTest {
-        val api = FakeNobleApiService().apply {
-            topUpResponse = WalletResponse("user-1", "ETB", 2500)
+        val cloudStore = FakeNobleCloudStore().apply {
+            topUpWallet = NobleWallet("user-1", "ETB", 2500, 1713270000L)
         }
         val dao = FakeNobleDao()
-        val repository = NobleRepositoryImpl(api = api, dao = dao)
+        val repository = NobleRepositoryImpl(cloudStore = cloudStore, dao = dao)
 
         val wallet = repository.topUpWallet("user-1", 500)
 
-        assertEquals(TopUpRequest(500), api.lastTopUpRequest)
+        assertEquals(TopUpCall(userId = "user-1", amount = 500), cloudStore.lastTopUpCall)
         assertEquals(2500, wallet.balance)
         assertEquals(2500, dao.wallet?.balance)
         assertNull(dao.clearedTransactionsFor)
     }
 
-    private class FakeNobleApiService : NobleApiService {
-        var walletResponse = WalletResponse("user-1", "ETB", 1000)
-        var topUpResponse = walletResponse
-        var transactionsResponse = TransactionsResponse(emptyList())
-        var lastTransferRequest: TransferRequest? = null
-        var lastTopUpRequest: TopUpRequest? = null
+    private data class TransferCall(
+        val fromUserId: String,
+        val toUserId: String,
+        val amount: Int,
+        val note: String?,
+    )
 
-        override suspend fun getWallet(userId: String): WalletResponse = walletResponse
+    private data class TopUpCall(
+        val userId: String,
+        val amount: Int,
+    )
 
-        override suspend fun getTransactions(userId: String): TransactionsResponse = transactionsResponse
+    private class FakeNobleCloudStore : NobleCloudStore {
+        var syncedSnapshot: NobleHomeSnapshot = homeSnapshot(balance = 1000, transactionId = "tx-1")
+        var transferSnapshot: NobleHomeSnapshot = syncedSnapshot
+        var topUpWallet: NobleWallet = NobleWallet("user-1", "ETB", 1000, 1713270000L)
+        var lastTransferCall: TransferCall? = null
+        var lastTopUpCall: TopUpCall? = null
 
-        override suspend fun transfer(request: TransferRequest): TransactionEnvelopeResponse {
-            lastTransferRequest = request
-            return TransactionEnvelopeResponse(
-                tx = TransactionResponse(
-                    id = "transfer-tx",
-                    fromUserId = request.fromUserId,
-                    toUserId = request.toUserId,
-                    amount = request.amount,
-                    status = "completed",
-                    note = request.note,
-                    createdAt = "2026-04-14T12:00:00Z",
-                )
-            )
+        override suspend fun ensureUserProfile(firebaseUid: String, phone: String?): String = firebaseUid
+
+        override suspend fun loadHome(userId: String): NobleHomeSnapshot = syncedSnapshot
+
+        override suspend fun transferMoney(
+            fromUserId: String,
+            recipient: String,
+            amount: Int,
+            note: String?,
+        ): NobleHomeSnapshot {
+            lastTransferCall = TransferCall(fromUserId, recipient, amount, note)
+            return transferSnapshot
         }
 
-        override suspend fun topUp(userId: String, request: TopUpRequest): WalletResponse {
-            lastTopUpRequest = request
-            return topUpResponse
+        override suspend fun topUpWallet(userId: String, amount: Int): NobleWallet {
+            lastTopUpCall = TopUpCall(userId, amount)
+            return topUpWallet
         }
+
+        override suspend fun markKycSubmitted(userId: String, idHash: String, documentNumber: String?) = Unit
     }
 
     private class FakeNobleDao : NobleDao {
@@ -182,5 +161,29 @@ class NobleRepositoryImplTest {
         override suspend fun upsertTransactions(items: List<TransactionCacheEntity>) {
             transactions.addAll(items)
         }
+    }
+
+    private companion object {
+        fun homeSnapshot(balance: Int, transactionId: String): NobleHomeSnapshot = NobleHomeSnapshot(
+            wallet = NobleWallet(
+                userId = "user-1",
+                currency = "ETB",
+                balance = balance,
+                updatedAt = 1713090000L,
+            ),
+            transactions = listOf(
+                NobleTransaction(
+                    id = transactionId,
+                    ownerUserId = "user-1",
+                    fromUserId = "user-1",
+                    toUserId = "user-3",
+                    amount = 400,
+                    currency = "ETB",
+                    status = "completed",
+                    note = "Rent",
+                    createdAt = "2026-04-14T11:00:00Z",
+                )
+            ),
+        )
     }
 }

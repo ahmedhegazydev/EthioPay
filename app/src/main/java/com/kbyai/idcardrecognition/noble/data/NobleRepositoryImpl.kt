@@ -3,15 +3,11 @@ package com.kbyai.idcardrecognition.noble.data
 import com.kbyai.idcardrecognition.noble.data.local.NobleDao
 import com.kbyai.idcardrecognition.noble.data.local.toDomain
 import com.kbyai.idcardrecognition.noble.data.local.toEntity
-import com.kbyai.idcardrecognition.noble.data.remote.NobleApiService
-import com.kbyai.idcardrecognition.noble.data.remote.TopUpRequest
-import com.kbyai.idcardrecognition.noble.data.remote.TransferRequest
-import com.kbyai.idcardrecognition.noble.data.remote.toDomain
 import com.kbyai.idcardrecognition.noble.domain.NobleHomeSnapshot
 import com.kbyai.idcardrecognition.noble.domain.NobleWallet
 
 class NobleRepositoryImpl(
-    private val api: NobleApiService,
+    private val cloudStore: NobleCloudStore,
     private val dao: NobleDao,
 ) : NobleRepository {
 
@@ -22,10 +18,13 @@ class NobleRepositoryImpl(
     }
 
     override suspend fun syncHome(userId: String): NobleHomeSnapshot {
-        val remoteWallet = api.getWallet(userId).toDomain()
-        val remoteTransactions = api.getTransactions(userId).items.map { it.toDomain(userId) }
+        val remoteSnapshot = cloudStore.loadHome(userId)
+        val remoteWallet = remoteSnapshot.wallet
+        val remoteTransactions = remoteSnapshot.transactions
 
-        dao.upsertWallet(remoteWallet.toEntity())
+        if (remoteWallet != null) {
+            dao.upsertWallet(remoteWallet.toEntity())
+        }
         dao.clearTransactions(userId)
         dao.upsertTransactions(remoteTransactions.map { it.toEntity() })
 
@@ -41,19 +40,20 @@ class NobleRepositoryImpl(
         amount: Int,
         note: String?,
     ): NobleHomeSnapshot {
-        api.transfer(
-            TransferRequest(
-                fromUserId = fromUserId,
-                toUserId = toUserId,
-                amount = amount,
-                note = note,
-            )
+        val snapshot = cloudStore.transferMoney(
+            fromUserId = fromUserId,
+            recipient = toUserId,
+            amount = amount,
+            note = note,
         )
-        return syncHome(fromUserId)
+        snapshot.wallet?.let { dao.upsertWallet(it.toEntity()) }
+        dao.clearTransactions(fromUserId)
+        dao.upsertTransactions(snapshot.transactions.map { it.toEntity() })
+        return snapshot
     }
 
     override suspend fun topUpWallet(userId: String, amount: Int): NobleWallet {
-        val wallet = api.topUp(userId, TopUpRequest(amount)).toDomain()
+        val wallet = cloudStore.topUpWallet(userId, amount)
         dao.upsertWallet(wallet.toEntity())
         return wallet
     }

@@ -1,0 +1,5 @@
+{
+  "name": "noble-fintech-dashboard",
+  "description": "Realtime Noble dashboard backed by Firebase Auth and Firestore.",
+  "env": {}
+}
