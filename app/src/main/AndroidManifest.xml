@@ -58,7 +58,7 @@
 <!--            android:screenOrientation="portrait" />-->
         <provider
             android:name="androidx.core.content.FileProvider"
-            android:authorities="com.kbyai.idcardrecognition.fileprovider"
+            android:authorities="com.eathioPay.demo.fileprovider"
             android:exported="false"
             android:grantUriPermissions="true">
             <meta-data

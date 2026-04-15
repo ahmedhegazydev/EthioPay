@@ -12,7 +12,7 @@
         android:layout_height="match_parent">
 
     </io.fotoapparat.view.CameraView>
-    <com.kbyai.idcardrecognition.payment.idcardrecognition.FaceView
+    <com.eathioPay.demo.payment.idcardrecognition.FaceView
         android:id="@+id/faceView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"

@@ -8,7 +8,7 @@ plugins {
 }
 
 android {
-    namespace = "com.kbyai.idcardrecognition"
+    namespace = "com.eathioPay.demo"
     compileSdk = 36
 
     // ✅ (اختياري) لو محتاج Java 17 زي README
@@ -27,7 +27,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.kbyai.idcardrecognition"
+        applicationId = "com.eathioPay.demo"
         minSdk = 24
         targetSdk = 36
         versionCode = 1
@@ -103,10 +103,18 @@ dependencies {
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
+    debugImplementation(libs.androidx.compose.ui.tooling)
     implementation(libs.androidx.compose.material3)
 
     implementation(libs.androidx.lifecycle.viewmodel.compose)
+    implementation(libs.androidx.lifecycle.runtime.compose)
     implementation("androidx.navigation:navigation-compose:2.8.5")
+
+    implementation(libs.retrofit)
+    implementation(libs.retrofit.converter.gson)
+    implementation(libs.okhttp.logging)
+    implementation(libs.koin.android)
+    implementation(libs.koin.androidx.compose)
 
     implementation("com.stripe:stripe-android:22.7.0")
 
@@ -120,13 +128,17 @@ dependencies {
     implementation("androidx.biometric:biometric:1.2.0-alpha05")
 
 
-    implementation(project(":libidsdk"))
-    implementation(project(":libfotoapparat"))
+    implementation(files("libs/idsdk.aar"))
+    implementation(files("libs/fotoapparat-2.7.0.aar"))
 
 
     implementation("androidx.compose.material:material-icons-extended")
     implementation("androidx.core:core-splashscreen:1.0.1")
 
     implementation(libs.material)
+
+    testImplementation(libs.junit)
+    testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.mockwebserver)
 
 }

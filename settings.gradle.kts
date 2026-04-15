@@ -39,7 +39,5 @@ dependencyResolutionManagement {
 
 rootProject.name = "EthioPay"
 include(
-    ":app",
-    ":libidsdk",
-    ":libfotoapparat"
+    ":app"
 )
