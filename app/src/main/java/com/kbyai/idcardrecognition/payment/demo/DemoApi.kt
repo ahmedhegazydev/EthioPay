@@ -76,6 +76,30 @@ object DemoApi {
         return body
     }
 
+    suspend fun requestOtp(phone: String): OtpSessionDto {
+        val body = JSONObject().apply {
+            put("phone", phone)
+        }.toString()
+        val obj = JSONObject(post("$baseUrl/auth/request-otp", body))
+        return OtpSessionDto(
+            userId = obj.getString("userId"),
+            phone = obj.getString("phone"),
+            otpRequired = obj.optBoolean("otpRequired", true),
+        )
+    }
+
+    suspend fun verifyOtp(phone: String, otp: String): AuthSessionDto {
+        val body = JSONObject().apply {
+            put("phone", phone)
+            put("otp", otp)
+        }.toString()
+        val obj = JSONObject(post("$baseUrl/auth/verify-otp", body))
+        return AuthSessionDto(
+            userId = obj.getString("userId"),
+            phone = obj.getString("phone"),
+        )
+    }
+
     // ✅ Retry بسيط مع backoff
     private suspend fun <T> requestWithRetry(
         maxRetries: Int = 1, // خليها 1 أو 2
@@ -238,4 +262,15 @@ data class AdminEventDto(
     val targetId: String?,
     val meta: String?,
     val createdAt: String
+)
+
+data class OtpSessionDto(
+    val userId: String,
+    val phone: String,
+    val otpRequired: Boolean,
+)
+
+data class AuthSessionDto(
+    val userId: String,
+    val phone: String,
 )

@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.view.WindowManager
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.getValue
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.fragment.app.FragmentActivity
@@ -32,6 +33,7 @@ class MainActivity : FragmentActivity() {
     internal var showErrorDialog: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        installSplashScreen()
         // قبل super.onCreate
 //        window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
 

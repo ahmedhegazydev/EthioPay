@@ -1,10 +1,19 @@
 package com.kbyai.idcardrecognition.login
 
-import android.app.Activity
 import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -14,8 +23,22 @@ import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.PhoneAndroid
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Send
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.AssistChipDefaults
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Snackbar
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -28,15 +51,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.kbyai.idcardrecognition.BuildConfig
-import com.kbyai.idcardrecognition.payment.demo.DemoApi
-import com.kbyai.idcardrecognition.payment.demo.DemoApiRaw.postJson
 import com.kbyai.idcardrecognition.payment.demo.saveAuthData
-import com.google.firebase.auth.FirebaseAuth
-import com.kbyai.idcardrecognition.payment.demo.getOrCreateUdid
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
-import org.json.JSONObject
 
 @Composable
 fun FirebasePhoneAuthScreen(
@@ -45,10 +60,7 @@ fun FirebasePhoneAuthScreen(
     val vm: AuthViewModel = viewModel()
     val st by vm.state.collectAsState()
     val ctx = LocalContext.current
-    val activity = remember(ctx) { ctx as Activity }
     val clipboard = LocalClipboardManager.current
-
-    var errorDialogMsg by remember { mutableStateOf<String?>(null) }
 
     fun mmss(sec: Int): String {
         val m = sec / 60
@@ -56,40 +68,18 @@ fun FirebasePhoneAuthScreen(
         return "%02d:%02d".format(m, s)
     }
 
-    // ===== Login success effect =====
-    LaunchedEffect(st.isLoggedIn) {
+    LaunchedEffect(st.isLoggedIn, st.userId) {
+        val userId = st.userId ?: return@LaunchedEffect
         if (!st.isLoggedIn) return@LaunchedEffect
 
-        if (BuildConfig.SIMULATE_OTP) {
-            val udid = getOrCreateUdid(ctx)
-            saveAuthData(context = ctx, prismaUserId = udid, firebaseUid = udid)
-            onLoginSuccess(udid)
-            return@LaunchedEffect
-        }
-
-        val u = FirebaseAuth.getInstance().currentUser ?: return@LaunchedEffect
-        try {
-            val body = JSONObject().apply {
-                put("firebaseUid", u.uid)
-                put("phone", u.phoneNumber ?: st.phone)
-            }.toString()
-
-            val respStr = withContext(Dispatchers.IO) {
-                postJson("${DemoApi.baseUrl}/auth/firebase", body)
-            }
-            val obj = JSONObject(respStr)
-            val prismaUserId = obj.getString("userId")
-
-            saveAuthData(context = ctx, prismaUserId = prismaUserId, firebaseUid = u.uid)
-            onLoginSuccess(prismaUserId)
-        } catch (e: Exception) {
-            val msg = "Exception error: ${e.message ?: "Unknown error"}"
-            errorDialogMsg = msg
-            Toast.makeText(ctx, msg, Toast.LENGTH_LONG).show()
-        }
+        saveAuthData(
+            context = ctx,
+            prismaUserId = userId,
+            phone = st.normalizedPhone ?: st.phone,
+        )
+        onLoginSuccess(userId)
     }
 
-    // ===== Light theme palette =====
     val pageBg = Brush.verticalGradient(
         colors = listOf(Color(0xFFF7F8FC), Color(0xFFF2F4FA), Color(0xFFF7F8FC))
     )
@@ -100,23 +90,6 @@ fun FirebasePhoneAuthScreen(
     val accent = Color(0xFF4F46E5)
     val accentSoft = Color(0xFFEEF2FF)
 
-    if (errorDialogMsg != null) {
-        AlertDialog(
-            onDismissRequest = { errorDialogMsg = null },
-            title = { Text("Error") },
-            text = { Text(errorDialogMsg!!) },
-            confirmButton = {
-                TextButton(onClick = {
-                    clipboard.setText(AnnotatedString(errorDialogMsg!!))
-                    Toast.makeText(ctx, "Copied to clipboard", Toast.LENGTH_SHORT).show()
-                }) { Text("Copy") }
-            },
-            dismissButton = {
-                TextButton(onClick = { errorDialogMsg = null }) { Text("Close") }
-            }
-        )
-    }
-
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -124,7 +97,6 @@ fun FirebasePhoneAuthScreen(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        // Header
         Card(
             shape = RoundedCornerShape(22.dp),
             colors = CardDefaults.cardColors(containerColor = cardBg),
@@ -151,26 +123,23 @@ fun FirebasePhoneAuthScreen(
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            "We’ll send you a 6-digit OTP",
+                            "Backend OTP login with demo code 123456",
                             color = textSub,
                             style = MaterialTheme.typography.bodyMedium
                         )
                     }
-                    if (BuildConfig.SIMULATE_OTP) {
-                        AssistChip(
-                            onClick = { clipboard.setText(AnnotatedString("123456")) },
-                            label = { Text("Sim: 123456") },
-                            colors = AssistChipDefaults.assistChipColors(
-                                containerColor = Color(0xFFFFF7ED),
-                                labelColor = Color(0xFFB45309)
-                            )
+                    AssistChip(
+                        onClick = { clipboard.setText(AnnotatedString("123456")) },
+                        label = { Text("OTP: 123456") },
+                        colors = AssistChipDefaults.assistChipColors(
+                            containerColor = Color(0xFFFFF7ED),
+                            labelColor = Color(0xFFB45309)
                         )
-                    }
+                    )
                 }
             }
         }
 
-        // Phone input card
         Card(
             shape = RoundedCornerShape(22.dp),
             colors = CardDefaults.cardColors(containerColor = cardBg),
@@ -183,20 +152,20 @@ fun FirebasePhoneAuthScreen(
                     value = st.phone,
                     onValueChange = { vm.onEvent(AuthEvent.PhoneChanged(it)) },
                     label = { Text("Phone") },
-                    placeholder = { Text("010xxxxxxx أو +2010xxxxxxx") },
+                    placeholder = { Text("010xxxxxxx or +2010xxxxxxx") },
                     leadingIcon = { Icon(Icons.Default.PhoneAndroid, contentDescription = null) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true
                 )
 
-                val otpBtnEnabled =
-                    !st.isSendingOtp && !st.isVerifying && (st.resendSecondsLeft == 0)
-
+                val otpBtnEnabled = !st.isSendingOtp && !st.isVerifying && st.resendSecondsLeft == 0
                 Button(
-                    onClick = { vm.onEvent(AuthEvent.SendOtp(activity)) },
+                    onClick = { vm.onEvent(AuthEvent.SendOtp) },
                     enabled = otpBtnEnabled,
-                    modifier = Modifier.fillMaxWidth().height(54.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(54.dp),
                     shape = RoundedCornerShape(16.dp)
                 ) {
                     if (st.isSendingOtp) {
@@ -228,8 +197,7 @@ fun FirebasePhoneAuthScreen(
             }
         }
 
-        // OTP section (only after code sent)
-        if (st.verificationId != null) {
+        if (st.otpRequested) {
             Card(
                 shape = RoundedCornerShape(22.dp),
                 colors = CardDefaults.cardColors(containerColor = cardBg),
@@ -240,9 +208,7 @@ fun FirebasePhoneAuthScreen(
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     OutlinedTextField(
                         value = st.otp,
-                        onValueChange = {
-                            vm.onEvent(AuthEvent.OtpChanged(it.filter(Char::isDigit).take(6)))
-                        },
+                        onValueChange = { vm.onEvent(AuthEvent.OtpChanged(it)) },
                         label = { Text("OTP") },
                         placeholder = { Text("6 digits") },
                         leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null) },
@@ -254,7 +220,9 @@ fun FirebasePhoneAuthScreen(
                     Button(
                         onClick = { vm.onEvent(AuthEvent.VerifyOtp) },
                         enabled = !st.isVerifying && st.otp.length == 6,
-                        modifier = Modifier.fillMaxWidth().height(54.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(54.dp),
                         shape = RoundedCornerShape(16.dp)
                     ) {
                         if (st.isVerifying) {
@@ -289,7 +257,7 @@ fun FirebasePhoneAuthScreen(
                 Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
                     Icon(Icons.Default.CheckCircle, contentDescription = null, tint = Color(0xFF047857))
                     Spacer(Modifier.width(10.dp))
-                    Text("✅ Logged in", color = Color(0xFF065F46), fontWeight = FontWeight.Bold)
+                    Text("Logged in", color = Color(0xFF065F46), fontWeight = FontWeight.Bold)
                 }
             }
         }
@@ -297,7 +265,7 @@ fun FirebasePhoneAuthScreen(
         AssistChip(
             onClick = {
                 clipboard.setText(AnnotatedString(st.phone))
-                Toast.makeText(ctx, "Phone copied ✅", Toast.LENGTH_SHORT).show()
+                Toast.makeText(ctx, "Phone copied", Toast.LENGTH_SHORT).show()
             },
             label = { Text("Copy phone") },
             leadingIcon = { Icon(Icons.Default.ContentCopy, contentDescription = null) },

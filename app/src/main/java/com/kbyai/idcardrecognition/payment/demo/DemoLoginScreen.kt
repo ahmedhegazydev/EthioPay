@@ -62,7 +62,7 @@ fun HomeDemo(
                 title = {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(
-                            "Ethiopay Demo",
+                            "Noble Pay Demo",
                             fontWeight = FontWeight.Bold,
                             color = textMain
                         )

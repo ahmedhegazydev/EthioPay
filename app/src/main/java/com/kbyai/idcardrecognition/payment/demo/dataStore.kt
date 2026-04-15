@@ -13,18 +13,18 @@ val Context.dataStore by preferencesDataStore(name = "app_storage")
 
 object StorageKeys {
     val PRISMA_USER_ID = stringPreferencesKey("prisma_user_id")
-    val FIREBASE_UID = stringPreferencesKey("firebase_uid")
+    val PHONE = stringPreferencesKey("phone")
     val API_KEY = stringPreferencesKey("api_key")
 }
 
 suspend fun saveAuthData(
     context: Context,
     prismaUserId: String,
-    firebaseUid: String
+    phone: String
 ) {
     context.dataStore.edit { prefs ->
         prefs[StorageKeys.PRISMA_USER_ID] = prismaUserId
-        prefs[StorageKeys.FIREBASE_UID] = firebaseUid
+        prefs[StorageKeys.PHONE] = phone
     }
 }
 
@@ -89,6 +89,23 @@ suspend fun clearFaceVerified(context: Context) {
 }
 
 private val KEY_UDID = stringPreferencesKey("udid")
+
+suspend fun getSavedPhone(context: Context): String? {
+    return context.dataStore.data
+        .map { it[StorageKeys.PHONE] }
+        .first()
+}
+
+suspend fun clearAuthData(context: Context) {
+    context.dataStore.edit { prefs ->
+        prefs.remove(StorageKeys.PRISMA_USER_ID)
+        prefs.remove(StorageKeys.PHONE)
+        prefs.remove(KEY_SESSION_UNLOCKED)
+        prefs.remove(FaceKeys.FACE_OK)
+        prefs.remove(KycKeys.ID_HASH)
+        prefs.remove(KycKeys.KYC_DONE)
+    }
+}
 
 suspend fun getOrCreateUdid(context: Context): String {
     val existing = context.dataStore.data

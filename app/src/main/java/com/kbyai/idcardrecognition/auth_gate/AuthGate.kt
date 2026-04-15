@@ -1,11 +1,8 @@
 package com.kbyai.idcardrecognition.auth_gate
 
-import android.content.Context
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.LocalContext
-import androidx.navigation.NavHostController
 import com.kbyai.idcardrecognition.payment.demo.clearFaceVerified
 import com.kbyai.idcardrecognition.payment.demo.getPrismaUserId
 import com.kbyai.idcardrecognition.payment.demo.isKycDone
@@ -17,14 +14,13 @@ fun AuthGate(
     navigateTo: (String) -> Unit,
     setPrismaUserId: (String?) -> Unit
 ) {
-    val firebaseUser by rememberFirebaseUser()
     val ctx = LocalContext.current
 
-    LaunchedEffect(firebaseUser) {
+    LaunchedEffect(Unit) {
         val pid = getPrismaUserId(ctx)
         setPrismaUserId(pid)
 
-        if (firebaseUser == null && pid == null) {
+        if (pid.isNullOrBlank()) {
             clearFaceVerified(ctx)
             navigateTo(Screen.Login.route)
             return@LaunchedEffect

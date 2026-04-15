@@ -21,7 +21,7 @@ android {
         abi {
             isEnable = true
             reset()
-            include("armeabi-v7a", "arm64-v8a")
+            include("arm64-v8a")
             isUniversalApk = false
         }
     }
@@ -34,6 +34,7 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        resConfigs("en", "ar")
     }
 
     buildTypes {
@@ -70,6 +71,21 @@ android {
         buildConfig = true
     }
 
+    packaging {
+        resources {
+            excludes += setOf(
+                "META-INF/DEPENDENCIES",
+                "META-INF/LICENSE",
+                "META-INF/LICENSE.txt",
+                "META-INF/license.txt",
+                "META-INF/NOTICE",
+                "META-INF/NOTICE.txt",
+                "META-INF/notice.txt",
+                "META-INF/*.kotlin_module",
+            )
+        }
+    }
+
 }
 
 
@@ -88,12 +104,6 @@ dependencies {
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
-    implementation(libs.androidx.compose.material3.adaptive.navigation.suite)
-    implementation(libs.firebase.auth)
-    implementation(libs.androidx.credentials)
-    implementation(libs.androidx.credentials.play.services.auth)
-    implementation(libs.googleid)
-
 
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation("androidx.navigation:navigation-compose:2.8.5")
@@ -107,25 +117,15 @@ dependencies {
 
     implementation ("androidx.datastore:datastore-preferences:1.2.0")
 
-
-    // Accura OCR
-    implementation("com.github.accurascan:AccuraOCR:6.2.5")
-    // Accura Face match
-    implementation("com.github.accurascan:AccuraFaceMatch:4.0.0")
-    // Accura Liveness
-    implementation("com.github.accurascan:Liveness-Android:3.7.0")
-
-
-
     implementation("androidx.biometric:biometric:1.2.0-alpha05")
 
 
     implementation(project(":libidsdk"))
     implementation(project(":libfotoapparat"))
-    implementation("com.itextpdf:itextpdf:5.5.13.5")
 
 
     implementation("androidx.compose.material:material-icons-extended")
+    implementation("androidx.core:core-splashscreen:1.0.1")
 
     implementation(libs.material)
 

@@ -6,20 +6,19 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.lifecycle.compose.LocalLifecycleOwner
-import androidx.lifecycle.lifecycleScope
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.kbyai.idcardrecognition.auth_gate.AuthGate
 import com.kbyai.idcardrecognition.login.FirebasePhoneAuthScreen
 import com.kbyai.idcardrecognition.payment.demo.HomeDemo
+import com.kbyai.idcardrecognition.payment.demo.clearAuthData
 import com.kbyai.idcardrecognition.payment.demo.clearFaceVerified
 import com.kbyai.idcardrecognition.payment.demo.setFaceVerified
+import com.kbyai.idcardrecognition.payment.demo.setSessionUnlocked
 import com.kbyai.idcardrecognition.payment.idcardrecognition.KycRoute
 import com.kbyai.idcardrecognition.payment.models.ScannedCardUi
 import com.kbyai.idcardrecognition.payment.models.Screen
-import com.google.firebase.auth.FirebaseAuth
 import com.kbyai.idcardrecognition.payment.ver_id_2.FaceLoginButton
 import com.stripe.android.Stripe
 import kotlinx.coroutines.launch
@@ -39,7 +38,6 @@ fun AppNavGraph(
 ) {
     val navController = rememberNavController()
     val ctx = LocalContext.current
-    val lifecycleOwner = LocalLifecycleOwner.current
 
     val scope = rememberCoroutineScope()
 
@@ -79,6 +77,7 @@ fun AppNavGraph(
             FaceLoginButton(
                 onLoggedIn = {
                     scope.launch {
+                        setSessionUnlocked(ctx, true)
                         setFaceVerified(ctx, true)
                         navController.navigate(Screen.Kyc.route) {
                             popUpTo(Screen.Login.route) { inclusive = true }
@@ -92,7 +91,7 @@ fun AppNavGraph(
             KycRoute(
                 navController = navController,
                 onResult = { json ->
-                    lifecycleOwner.lifecycleScope.launchWhenStarted {
+                    scope.launch {
                         handleKycResult(
                             context = ctx,
                             navController = navController,
@@ -114,11 +113,15 @@ fun AppNavGraph(
                     scannedCard = scannedCard,
                     onScanClick = onScanClick,
                     onLogOutClicked = {
-
-                        FirebaseAuth.getInstance().signOut()
                         prismaUserId = null
                         scope.launch {
+                            prismaUserIdState = null
+                            clearAuthData(ctx)
                             clearFaceVerified(ctx)
+                            navController.navigate(Screen.Login.route) {
+                                popUpTo(Screen.Home.route) { inclusive = true }
+                                launchSingleTop = true
+                            }
                         }
                     },
                     stripe = stripe,
